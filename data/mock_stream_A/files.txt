@@ -1,0 +1,27 @@
+w2_con.npt The control file
+graph.npt Defines output units
+bth1.csv  Bathimetric data
+met.csv Meteorology File
+wsc.csv wind sheltering coefficients
+Shade.npt Defines the shade over the water
+lpr.csv Longitudinal Profile File initial conditions
+vpr.csv vertically varying initial conditions
+
+cin.csv - This file contains the inflow concentrations for a branch with an upstream flow boundary condition .
+qin_br8.npt inflow for a branch with an upstream flow boundary condition .
+tin_br8.npt temperture for a branch with an upstream flow boundary condition .
+
+hangmanc.csv inflow constituent concentrations for each tributary
+hangq01.npt inflows for a tributary
+HangT01.npt flow temperatures for a tributary
+
+* cdt8.csv distributed tributary inflow concentrations
+* qdt_br8.npt Distributed Tributary Inflow
+* tdt_br8.npt Distributed Tributary Inflow Temperature
+
+* w2_aerate.npt hypolimnetic aeration algorithm which allow a model user to add oxygen and additional mixing to a section of a waterbody that is controlled by an oxygen probe
+* w2_envirprf.npt low a model user to assess model predictions of state variables and how those can be affected by management changes to the waterbody system
+* w2_habitat.npt compute habitat volumes for various fish species
+* w2_selective.npt advanced output options
+
+             * files were deleted as they are not needed for this mock stream
