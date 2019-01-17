@@ -1,0 +1,17 @@
+{
+    "model_run": {
+        "type": "flow",
+        "input_files": [
+            { "name":"hangq01.npt", "min_qwd":"1", "max_qwd":"2", "steps":"0.5" },
+            { "name":"spkwwtpq01.npt", "min_qwd":"0.3", "max_qwd":"1.3", "steps":"0.7" }
+        ]
+    },
+    "model_analysis": {
+        "type": "quality",
+        "output_file": "dwo_sp1_seg41.opt",
+        "parameters": [
+            { "name":"TN", "target":"1.2", "weight":"4", "score_step":"0.1", "desired_direction":"-1" },
+            { "name":"CBOD", "target":"2.7", "weight":"2", "score_step":"0.5", "desired_direction":"+1" }
+        ]
+    }
+}
