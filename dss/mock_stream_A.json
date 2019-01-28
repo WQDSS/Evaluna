@@ -2,7 +2,7 @@
     "model_run": {
         "type": "flow",
         "input_files": [
-            { "name":"hangq01.npt", "min_qwd":"1", "max_qwd":"2", "steps":"0.5" },
+            { "name":"hangq01.csv", "min_qwd":"1", "max_qwd":"2", "steps":"0.5" },
             { "name":"qin_br8.csv", "min_qwd":"30", "max_qwd":"40", "steps":"2" }
         ]
     },
