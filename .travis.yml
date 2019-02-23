@@ -1,0 +1,21 @@
+language: python
+cache: pip
+dist: xenial
+python:    
+  - "3.7"
+
+services:
+  - docker
+
+install:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build --rm -f "Dockerfile" -t "$DOCKER_USERNAME/waterqualitydss-test:latest" -t "$DOCKER_USERNAME/waterqualitydss-test:$TRAVIS_COMMIT" -t waterqualitydss-test:latest --target test .
+  - docker build --rm -f "Dockerfile" -t "$DOCKER_USERNAME/waterqualitydss:latest" -t "$DOCKER_USERNAME/waterqualitydss:$TRAVIS_COMMIT" -t waterqualitydss:latest . 
+
+# command to run tests
+script:
+  - docker-compose -f dss/test/docker-compose.yml up --abort-on-container-exit
+
+deploy:
+  provider: script
+  script: bash scripts/deploy.sh $TRAVIS_COMMIT
