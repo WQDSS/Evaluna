@@ -23,13 +23,14 @@ EXPOSE ${PORT}
 ENTRYPOINT ["python3",  "src/api.py"]
 
 # copy the model -- temporary hack, should probably receive all inputs from user via request
-COPY data/mock_stream_A/* /model/  
+COPY data/mock_stream_A/* /model/
 
 # copy the contents of the app
 COPY dss/src/ /app/src/
 
 FROM base-with-devel-deps as test
 # copy the contents of the app
+COPY data/mock_stream_A/* /test/mock_stream_A/
 COPY dss/src/ /app/src/
 
 ENV PYTHONPATH=/app/src
