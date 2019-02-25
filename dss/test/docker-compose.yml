@@ -1,0 +1,8 @@
+version: '3'
+services:
+  app:         
+    image: "waterqualitydss:latest"
+  test:
+    depends_on:
+      - "app"
+    image: "waterqualitydss-test:latest"
