@@ -18,4 +18,4 @@ script:
 
 deploy:
   provider: script
-  script: bash scripts/deploy.sh $TRAVIS_COMMIT
+  script: bash dss/scripts/deploy.sh $TRAVIS_COMMIT
