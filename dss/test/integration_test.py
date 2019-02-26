@@ -19,7 +19,7 @@ def test_against_docker():
         status = requests.get(f"{BASE_URL}/status/{exec_id}").json()['status']
         if status == "COMPLETED":
             complete = True
-        else:
+        else:            
             time.sleep(5)
     
     resp = requests.get(f"{BASE_URL}/status/{exec_id}").json()                

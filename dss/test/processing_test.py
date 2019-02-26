@@ -5,6 +5,7 @@ import shutil
 from unittest.mock import patch
 import pytest
 from pytest import approx
+from asynctest import CoroutineMock
 
 import processing
 
@@ -26,7 +27,8 @@ params = {
     },       
 }
 
-def test_execute_dss():    
+@pytest.mark.asyncio
+async def test_execute_dss():    
     exec_id = 'foo'
 
     def get_run_dir():
@@ -54,10 +56,10 @@ def test_execute_dss():
         
         return run_dir
 
-    with patch('processing.exec_model') as exec_model:        
+    with patch('processing.exec_model_async', new=CoroutineMock()) as exec_model:
         with patch('processing.prepare_run_dir') as prepare_run_dir:            
             prepare_run_dir.side_effect = create_out_csv
-            processing.execute_dss(exec_id, params)            
+            await processing.execute_dss(exec_id, params)            
         
     assert exec_model.call_count == 6 * 3  #  6 values for q_in, 3 values for hangq01
     assert prepare_run_dir.call_count == 6 * 3
@@ -100,7 +102,8 @@ def test_generate_permutations():
     expected = [dict(zip(names, v)) for v in value_perms]
     assert result == expected
 
-def test_mock_stream():
+@pytest.mark.asyncio
+async def test_mock_stream():
     exec_id = 'mock_stream_exec'
     mock_stream_dir = "/test/mock_stream_A"
     test_params = {
@@ -123,7 +126,7 @@ def test_mock_stream():
     shutil.copy(os.path.join(processing.BASE_MODEL_DIR,
                              processing.MODEL_EXE), mock_stream_dir)
     processing.BASE_MODEL_DIR = mock_stream_dir
-    processing.execute_dss(exec_id, test_params)
+    await processing.execute_dss(exec_id, test_params)
     dss_result = processing.get_result(exec_id)
     assert dss_result['params']['hangq01.csv'] == 1.0
     assert dss_result['params']['qin_br8.csv'] == 30.0

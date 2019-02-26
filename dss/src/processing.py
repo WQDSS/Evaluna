@@ -1,9 +1,12 @@
+import asyncio
 import csv
 from enum import Enum
 import itertools
+import logging
 import os
 import shutil
 from subprocess import check_call
+import sys
 import tempfile
 import uuid
 
@@ -11,6 +14,9 @@ EXECUTIONS = {}
 
 MODEL_EXE=os.environ.get("WQDSS_MODEL_EXE", "/model/w2_exe_linux_par")
 BASE_MODEL_DIR= os.environ.get("WQDSS_BASE_MODEL_DIR", "/model")
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 class ExectuionState(Enum):    
     RUNNING = 'RUNNING'
@@ -32,21 +38,24 @@ class Execution:
             shutil.rmtree(run_dir)
 
     def mark_complete(self):
-        self.state = ExectuionState.COMPLETED
+        self.state = ExectuionState.COMPLETED    
 
-    def execute(self, params):
+    async def execute(self, params):
         permutations = generate_permutations(params)
         for (i,p) in enumerate(permutations):
-            print(f'going to start run {i} with p={p}')
-            run_dir = prepare_run_dir(self.exec_id, params, p)                    
-            self.add_run(run_dir, p)
-            exec_model(run_dir, params)
-            print(f'Finished run {i}')
+            logger.info(f'going to start run {i} with p={p}')
+            await execute_run_async(self, params, p)
+            logger.info(f'Finished run {i}')
         
         run_scores = [(run_dir, p, get_run_score(run_dir, params)) for (run_dir, p) in self.runs]        
         best_run = max(run_scores, key= lambda x: x[2])
         return {'best_run': best_run[0], 'params': best_run[1], 'score': best_run[2]}
-        
+
+
+async def execute_run_async(execution, params, run_permutation):
+    run_dir = prepare_run_dir(execution.exec_id, params, run_permutation)
+    execution.add_run(run_dir, run_permutation)
+    await exec_model_async(run_dir, params)
 
 
 def generate_permutations(params):
@@ -109,8 +118,13 @@ def prepare_run_dir(exec_id, params, param_values):
     return run_dir
 
 
-def exec_model(run_dir, params):    
-    check_call([MODEL_EXE, run_dir])
+async def exec_model_async(run_dir, params):
+    process = await asyncio.create_subprocess_exec(
+            MODEL_EXE, run_dir, 
+            stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+    logger.debug(f'going to execute process {process}')
+    await process.wait()
+    logger.debug(f'Finished executing {process}')
 
 def get_run_parameter_value(param_name, contents):
     """
@@ -166,11 +180,11 @@ def get_result(exec_id):
     return EXECUTIONS[exec_id].result
 
 
-def execute_dss(exec_id, params):
+async def execute_dss(exec_id, params):
     #TODO: extract handling the Execution to a context
     current_execution =  Execution(exec_id)
     try:
-        result = current_execution.execute(params)
+        result = await current_execution.execute(params)
         current_execution.result = result
     finally:    
         current_execution.mark_complete()
