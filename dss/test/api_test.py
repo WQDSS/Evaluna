@@ -2,9 +2,15 @@ import json
 import threading
 import unittest.mock as mock
 import pytest
+import asyncio
+from asynctest import CoroutineMock
 
 import api as service
 import processing
+
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 INPUT_EXAMPLE="""
 {
@@ -38,27 +44,27 @@ def test_dss_execution(api, tmp_path):
     '''
     Test the execution of a dss, including setting the paramters, and polling for a result
     '''    
-    RESPONSE={"score" : 4.2}
-   
+    RESPONSE={"score" : 4.2}    
+
     file_obj = tmp_path / "data.t"
     file_obj.write_bytes(INPUT_EXAMPLE.encode())
     PROCESSING_DURATION = 1
     
     files = {'input': (file_obj.name, file_obj.read_bytes(), 'application/json')}
     data = {'processing_duration' : PROCESSING_DURATION}
-    
-    completion_event = threading.Event()
-    start_event = threading.Event()
+       
+    start_event = asyncio.Event()
 
-    def my_execute(params):        
-        start_event.wait()        
-        completion_event.set()
+    async def my_execute(params):        
+        await start_event.wait()        
         assert params == json.loads(INPUT_EXAMPLE)
         return RESPONSE
 
-    with mock.patch.object(processing.Execution, 'execute', side_effect=my_execute) as execute:             
-        resp = api.requests.post("/dss", data=data, files=files)            
 
+    with api.requests:            
+        with mock.patch.object(processing.Execution, 'execute', new=CoroutineMock(side_effect=my_execute)) as execute:
+            resp = api.requests.post("/dss", data=data, files=files)                 
+        
     model_response = resp.json()
     assert 'id' in model_response
     exec_id = model_response['id']
@@ -67,10 +73,11 @@ def test_dss_execution(api, tmp_path):
     assert api.requests.get(f"/status/{exec_id}").json()['status'] == processing.ExectuionState.RUNNING.value
 
     # the model can now execute
-    start_event.set()
-
+    start_event.set()    
+    
     # wait for execution to complete
     completion_event.wait()        
+
     resp = api.requests.get(f"/status/{exec_id}").json()                
     assert resp['status'] == processing.ExectuionState.COMPLETED.value
     assert resp['result'] == RESPONSE

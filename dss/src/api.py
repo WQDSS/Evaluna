@@ -1,7 +1,14 @@
+import asyncio
 import json
+import os
 
 import responder
 import processing
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 
 api = responder.API()
 
@@ -17,7 +24,7 @@ async def status(req, resp, * , exec_id):
     resp.media = {"id" : exec_id, "status": status}    
     if result is not None:
         resp.media["result"] = result
-        print(result)
+        logging.info(result)
 
 @api.route("/dss")
 async def exec_dss(req, resp):
@@ -26,14 +33,23 @@ async def exec_dss(req, resp):
     """    
     params = json.loads((await req.media('files'))['input']['content'])
 
-    exec_id = processing.get_exec_id()
+
+    exec_id = processing.get_exec_id()    
+        
+    async def dss_task():
+        logger.info("Going to execute dss!")       
+        await processing.execute_dss(exec_id, params)
     
-    @api.background.task
-    def task():        
-        processing.execute_dss(exec_id, params)
-    
-    task()
+    loop = asyncio.get_event_loop()
+    loop.create_task(dss_task())
+    logger.info("created task %s", exec_id)
     resp.media = {"id" : exec_id}
 
 if __name__ == "__main__":
-    api.run()
+    logger.info("app started!")
+    debug = os.environ.get("DEBUG", False)
+    log_level = 'debug' if debug else 'info'
+    if debug:
+        log_level='debug'
+    api.run(debug=debug, log_level=log_level)
+

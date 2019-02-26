@@ -1,7 +1,7 @@
 FROM python:3 as base
 
 RUN mkdir /model
-COPY model/w2_exe_linux_par /model/
+COPY model/linux_model_64_v4_1 /model/w2_exe_linux_par
 
 # use pipenv to install dependencies
 RUN pip install pipenv

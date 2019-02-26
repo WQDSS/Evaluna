@@ -19,8 +19,8 @@ def test_against_docker():
         status = requests.get(f"{BASE_URL}/status/{exec_id}").json()['status']
         if status == "COMPLETED":
             complete = True
-        else:
-            time.sleep(5)
+        else:            
+
     
     resp = requests.get(f"{BASE_URL}/status/{exec_id}").json()                
     assert 'score' in resp['result']
