@@ -21,8 +21,8 @@ params = {
     'model_run': {
         'type': 'flow',
         'input_files': [
-            {'name': 'hangq01.csv', 'min_qwd': '1', 'max_qwd':'2', 'steps':'0.5' },
-            {'name': 'qin_br8.csv', 'min_qwd': '30', 'max_qwd':'40', 'steps':'2' }
+            {'name': 'hangq01.csv', 'col_name': 'Q', 'min_val': '1', 'max_val':'2', 'steps':'0.5' },
+            {'name': 'qin_br8.csv', 'col_name': 'QWD', 'min_val': '30', 'max_val':'40', 'steps':'2' }
         ]
     },       
 }
@@ -111,8 +111,8 @@ async def test_mock_stream():
         "model_run": {
             "type": "flow",
             "input_files": [
-                {"name": "hangq01.csv", "min_qwd": "1", "max_qwd": "2", "steps": "0.5"},
-                {"name": "qin_br8.csv", "min_qwd": "30", "max_qwd": "34", "steps": "2"}
+                {"name": "hangq01.csv", "col_name": "Q", "min_val": "1", "max_val": "2", "steps": "0.5"},
+                {"name": "qin_br8.csv", "col_name": "QWD", "min_val": "30", "max_val": "34", "steps": "2"}
             ]
         },
         "model_analysis": {
