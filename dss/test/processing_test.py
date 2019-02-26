@@ -105,8 +105,6 @@ def test_generate_permutations():
 
 @pytest.mark.asyncio
 async def test_mock_stream():
-
-def test_mock_stream():
     exec_id = 'mock_stream_exec'
     mock_stream_dir = "/test/mock_stream_A"
     test_params = {
