@@ -18,11 +18,15 @@ BASE_MODEL_DIR= os.environ.get("WQDSS_BASE_MODEL_DIR", "/model")
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+def sliced(seq, n):
+    return itertools.takewhile(bool, (seq[i: i + n] for i in itertools.count(0, n)))
+
 class ExectuionState(Enum):    
     RUNNING = 'RUNNING'
     COMPLETED = 'COMPLETED'
 
 class Execution:
+    
     def __init__(self, exec_id, state=ExectuionState.RUNNING):
         self.state = state
         self.result = None
@@ -42,10 +46,12 @@ class Execution:
 
     async def execute(self, params):
         permutations = generate_permutations(params)
-        for (i,p) in enumerate(permutations):
-            logger.info(f'going to start run {i} with p={p}')
-            await execute_run_async(self, params, p)
-            logger.info(f'Finished run {i}')
+        num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "4"))
+        for i,s in enumerate(sliced(permutations, num_parallel_execs)):
+            logger.info(f'About to process slice {i}: {s}')
+            awaitables = [execute_run_async(self, params, p) for p in s]        
+            await asyncio.gather(*awaitables)
+            logger.info(f'finished slice {i}: {s}')
         
         run_scores = [(run_dir, p, get_run_score(run_dir, params)) for (run_dir, p) in self.runs]        
         best_run = max(run_scores, key= lambda x: x[2])
