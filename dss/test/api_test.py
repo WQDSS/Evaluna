@@ -75,9 +75,6 @@ def test_dss_execution(api, tmp_path):
     # the model can now execute
     start_event.set()    
     
-    # wait for execution to complete
-    completion_event.wait()        
-
     resp = api.requests.get(f"/status/{exec_id}").json()                
     assert resp['status'] == processing.ExectuionState.COMPLETED.value
     assert resp['result'] == RESPONSE
