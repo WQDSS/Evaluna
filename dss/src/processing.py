@@ -69,7 +69,7 @@ def generate_permutations(params):
     Returns the set of all relevant permutation values for the input files
     '''
     inputs = params['model_run']['input_files']
-    ranges = { i['name']: values_range(float(i['min_qwd']), float(i['max_qwd']), float(i['steps'])) for i in inputs }
+    ranges = { i['name']: values_range(float(i['min_val']), float(i['max_val']), float(i['steps'])) for i in inputs }
 
     # for now, get a full cartesian product of the parameter values
     run_values =  itertools.product(*ranges.values())
@@ -100,12 +100,9 @@ def update_inputs_for_run(run_dir, params, input_values):
         with open(os.path.join(run_dir, i['name']), 'w') as ofile:
             ofile.writelines(contents[:2])
             writer = csv.DictWriter(ofile, reader.fieldnames)
-            if 'QWD' in reader.fieldnames:
-                out_param = 'QWD'
-            else:
-                out_param = 'Q'
-            for row in reader:
-                
+            out_param = i['col_name']
+
+            for row in reader:                
                 row[out_param] = input_values[i['name']]
                 writer.writerow(row)
 
