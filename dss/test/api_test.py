@@ -45,13 +45,14 @@ def test_dss_execution(api, tmp_path):
     Test the execution of a dss, including setting the paramters, and polling for a result
     '''    
     RESPONSE={"score" : 4.2}    
+
     file_obj = tmp_path / "data.t"
     file_obj.write_bytes(INPUT_EXAMPLE.encode())
     PROCESSING_DURATION = 1
     
     files = {'input': (file_obj.name, file_obj.read_bytes(), 'application/json')}
     data = {'processing_duration' : PROCESSING_DURATION}
-        
+       
     start_event = asyncio.Event()
 
     async def my_execute(params):        
@@ -74,6 +75,9 @@ def test_dss_execution(api, tmp_path):
     # the model can now execute
     start_event.set()    
     
+    # wait for execution to complete
+    completion_event.wait()        
+
     resp = api.requests.get(f"/status/{exec_id}").json()                
     assert resp['status'] == processing.ExectuionState.COMPLETED.value
     assert resp['result'] == RESPONSE

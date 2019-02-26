@@ -15,6 +15,7 @@ EXECUTIONS = {}
 MODEL_EXE=os.environ.get("WQDSS_MODEL_EXE", "/model/w2_exe_linux_par")
 BASE_MODEL_DIR= os.environ.get("WQDSS_BASE_MODEL_DIR", "/model")
 
+
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
@@ -26,7 +27,6 @@ class ExectuionState(Enum):
     COMPLETED = 'COMPLETED'
 
 class Execution:
-    
     def __init__(self, exec_id, state=ExectuionState.RUNNING):
         self.state = state
         self.result = None
@@ -56,7 +56,6 @@ class Execution:
         run_scores = [(run_dir, p, get_run_score(run_dir, params)) for (run_dir, p) in self.runs]        
         best_run = max(run_scores, key= lambda x: x[2])
         return {'best_run': best_run[0], 'params': best_run[1], 'score': best_run[2]}
-
 
 async def execute_run_async(execution, params, run_permutation):
     run_dir = prepare_run_dir(execution.exec_id, params, run_permutation)

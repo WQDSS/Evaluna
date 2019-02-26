@@ -170,6 +170,7 @@
                 "sha256:e249096428b3ae81b08327a63a485ad0878de3fb939049038579ac0ef61e17e7"
             ],
             "version": "==1.1.1"
+
         },
         "marshmallow": {
             "hashes": [
@@ -346,6 +347,7 @@
         },
         "isort": {
             "hashes": [
+
                 "sha256:f19b23b22fb5a919a081bc31aabcc0991614c244d9215267e11abf2ca7b684ce"
             ],
             "version": "==4.3.9"
