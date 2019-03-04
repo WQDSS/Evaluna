@@ -1,8 +1,11 @@
 FROM python:3 as base
 
-RUN mkdir /model
-COPY model/linux_model_64_v4_1 /model/w2_exe_linux_par
+# setup the directory structure for models and the executables
+RUN mkdir /models
+RUN mkdir /dss-bin
+COPY model/linux_model_64_v4_1 /dss-bin/w2_exe_linux_par
 
+ENV  WQDSS_MODEL_EXE "/dss-bin/w2_exe_linux_par"
 # use pipenv to install dependencies
 RUN pip install pipenv
 WORKDIR /app
@@ -22,8 +25,8 @@ EXPOSE ${PORT}
 # define entrypoint
 ENTRYPOINT ["python3",  "src/api.py"]
 
-# copy the model -- temporary hack, should probably receive all inputs from user via request
-COPY data/mock_stream_A/* /model/
+# copy the model as the default model
+COPY data/mock_stream_A/* /models/default/
 
 # copy the contents of the app
 COPY dss/src/ /app/src/
@@ -37,6 +40,8 @@ ENV PYTHONPATH=/app/src
 COPY dss/test/ /test/
 
 # ignore collections warning about deprecation warning, there's nothing we can do about that for now
-ENTRYPOINT [ "pytest", "/test", "-W", "ignore::DeprecationWarning" ]
+ENTRYPOINT [ "pytest", "-W", "ignore::DeprecationWarning" ]
+
+CMD ["/test/"]
 
 FROM release

@@ -1,14 +1,16 @@
+import asyncio
+import logging
 import json
 import threading
 import unittest.mock as mock
+import zipfile
+
 import pytest
-import asyncio
 from asynctest import CoroutineMock
 
 import api as service
 import processing
 
-import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -80,3 +82,24 @@ def test_dss_execution(api, tmp_path):
     assert resp['result'] == RESPONSE
 
 
+def test_add_model(api, tmp_path):
+    file_a = tmp_path / "file.a"
+    file_a.write_bytes("this is a file".encode())
+
+    file_b = tmp_path / "file.b"
+    file_b.write_bytes("this is b file".encode())
+    
+    model_zip = tmp_path / "model.zip"
+
+    with zipfile.ZipFile(model_zip, 'w') as z:
+        z.write(file_a)
+        z.write(file_b)
+        
+    files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}
+    with mock.patch('processing.add_model') as add_model:
+        resp = api.requests.post("/add-model", files=files)
+    
+    model_added_resp = resp.json()
+    assert 'model_name' in model_added_resp
+    assert model_added_resp['model_name'] == 'test_model'
+    add_model.assert_called_once_with('test_model', model_zip.read_bytes())
