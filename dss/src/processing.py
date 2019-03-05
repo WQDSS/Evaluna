@@ -1,20 +1,22 @@
 import asyncio
+from io import BytesIO
 import csv
 from enum import Enum
 import itertools
 import logging
 import os
 import shutil
-from subprocess import check_call
 import sys
 import tempfile
 import uuid
+from zipfile import ZipFile
 
 EXECUTIONS = {}
+MODELS = {}
 
-MODEL_EXE=os.environ.get("WQDSS_MODEL_EXE", "/model/w2_exe_linux_par")
-BASE_MODEL_DIR= os.environ.get("WQDSS_BASE_MODEL_DIR", "/model")
-
+MODEL_EXE = os.environ.get("WQDSS_MODEL_EXE", "/dss-bin/w2_exe_linux_par")
+BASE_MODEL_DIR = os.environ.get("WQDSS_BASE_MODEL_DIR", "/models")
+DEFAULT_MODEL = "default"
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -25,6 +27,27 @@ def sliced(seq, n):
 class ExectuionState(Enum):    
     RUNNING = 'RUNNING'
     COMPLETED = 'COMPLETED'
+
+class ModelDirNotFoundError(Exception):
+    def __init__(self, model_dir):
+        self.model_dir = model_dir
+        super().__init__(f'Model dir: {model_dir} not found')
+
+class ModelNotFoundError(Exception):
+    def __init__(self, model_name):
+        self.model_name = model_name
+        super().__init__(f'model_name id: {model_name} not registered')
+
+
+def load_models():
+    '''
+    Populate the models DB, currently by walking the models directory
+    '''
+
+    models = next(os.walk(BASE_MODEL_DIR))[1]
+    for model in models:
+        MODELS[model] = os.path.join(BASE_MODEL_DIR, model)
+
 
 class Execution:
     def __init__(self, exec_id, state=ExectuionState.RUNNING):
@@ -47,6 +70,12 @@ class Execution:
     async def execute(self, params):
         permutations = generate_permutations(params)
         num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "4"))
+        try:        
+            model_name = params['model_run']['model_name']
+            logger.info(f'going to use model {model_name}: {MODELS[model_name]}')
+        except:            
+            logger.info(f'No model name specified, or model not registered')
+            
         for i,s in enumerate(sliced(permutations, num_parallel_execs)):
             logger.info(f'About to process slice {i}: {s}')
             awaitables = [execute_run_async(self, params, p) for p in s]        
@@ -115,8 +144,19 @@ def prepare_run_dir(exec_id, params, param_values):
     
     run_dir = tempfile.mkdtemp(prefix=f'wqdss-exec-{exec_id}')
     os.rmdir(run_dir)
-    shutil.copytree(BASE_MODEL_DIR, run_dir)    
-    update_inputs_for_run(run_dir, params, param_values)
+    model_run_params = params['model_run']
+    model_name = model_run_params['model_name'] if 'model_name' in model_run_params else DEFAULT_MODEL
+    try:
+        model_dir = MODELS[model_name]
+    except KeyError:
+        raise ModelNotFoundError(model_name)
+
+    try:
+        shutil.copytree(model_dir, run_dir)
+        update_inputs_for_run(run_dir, params, param_values)
+    except FileNotFoundError:
+        raise ModelDirNotFoundError(model_dir)
+    
     return run_dir
 
 
@@ -191,6 +231,14 @@ async def execute_dss(exec_id, params):
     finally:    
         current_execution.mark_complete()
 
+
+def add_model(model_name, model_contents):
+    if model_name in MODELS:
+        raise Exception(f"model {model_name} already exists in DB")
+    model_dir = os.path.join(f"/models/{model_name}")
+    model_zip = ZipFile(BytesIO(model_contents))    
+    model_zip.extractall(model_dir)
+    MODELS[model_name] = model_dir
 
     
     

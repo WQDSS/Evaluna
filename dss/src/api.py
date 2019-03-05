@@ -12,6 +12,10 @@ logger.setLevel(logging.DEBUG)
 
 api = responder.API()
 
+@api.on_event('startup')
+async def load_models():
+    processing.load_models()
+
 @api.route("/status/{exec_id}")
 async def status(req, resp, * , exec_id):
     try:
@@ -44,6 +48,18 @@ async def exec_dss(req, resp):
     loop.create_task(dss_task())
     logger.info("created task %s", exec_id)
     resp.media = {"id" : exec_id}
+
+@api.route("/add-model")
+async def add_model(req, resp)    :
+    """
+    Upload a directory containing a calibrated model, receives an identifier for that model
+    """
+    files = await req.media('files')
+    model_contents = files['model']['content']    
+    model_name = files['model']['filename']
+    processing.add_model(model_name, model_contents)
+    logger.info("Added model %s", model_name)
+    resp.media = {"model_name" : model_name}
 
 if __name__ == "__main__":
     logger.info("app started!")

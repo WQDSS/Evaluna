@@ -1,11 +1,38 @@
+import json
+import os
+import secrets
 import time
+import zipfile
+
 import requests
 
-BASE_URL="http://app:80"
+BASE_URL = 'http://app:80'
+TEST_MODEL_DIR = '/test/mock_stream_A/'
 
 def test_against_docker():
+
+    # load custom model
+    model_name = f'my-model-{secrets.randbelow(42)}'
+    model_file_name = 'model_zip'
+    with zipfile.ZipFile(model_file_name, 'w') as z:
+        for f in os.listdir(TEST_MODEL_DIR):
+            z.write(os.path.join(TEST_MODEL_DIR, f), arcname=f)
+    
+    with open(model_file_name, 'rb') as f:
+        files = {'model': (model_name, f.read(), 'application/zip')}
+
+    resp = requests.post(f'{BASE_URL}/add-model', files=files)
+    add_model_resp = resp.json()
+    assert add_model_resp['model_name'] == model_name
+
+    # execute dss with model
+    
+
     with open('/test/mock_input.json', 'rb') as f:
-        files = {'input': ('input', f.read(), 'application/json')}        
+        mock_input = json.load(f)
+    
+    mock_input['model_run']['model_name'] = model_name
+    files = {'input': ('input', json.dumps(mock_input), 'application/json')}        
     resp = requests.post(f"{BASE_URL}/dss", files=files)            
 
     model_response = resp.json()

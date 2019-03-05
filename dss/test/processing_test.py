@@ -102,7 +102,6 @@ def test_generate_permutations():
     expected = [dict(zip(names, v)) for v in value_perms]
     assert result == expected
 
-
 @pytest.mark.asyncio
 async def test_mock_stream():
     exec_id = 'mock_stream_exec'
@@ -126,10 +125,26 @@ async def test_mock_stream():
     }
     shutil.copy(os.path.join(processing.BASE_MODEL_DIR,
                              processing.MODEL_EXE), mock_stream_dir)
-    processing.BASE_MODEL_DIR = mock_stream_dir
+    processing.MODELS["default"] = mock_stream_dir
     await processing.execute_dss(exec_id, test_params)
     dss_result = processing.get_result(exec_id)
     assert dss_result['params']['hangq01.csv'] == 1.0
     assert dss_result['params']['qin_br8.csv'] == 30.0
     assert dss_result['score'] == approx(-1.336)
 
+@pytest.mark.asyncio
+async def test_model_or_dir_dont_exist():
+    
+    test_params = dict(params)
+    test_params['model_run']['model_name'] = 'somemodel'    
+
+    with pytest.raises(processing.ModelNotFoundError) as excinfo:
+        await processing.execute_dss('no-such-model', test_params)
+    assert excinfo.value.model_name == 'somemodel'
+    
+    
+    processing.MODELS['somemodel'] = '/test/does-not-exist'
+    with pytest.raises(processing.ModelDirNotFoundError) as excinfo:
+        await processing.execute_dss('this-will-fail', test_params)
+
+    assert excinfo.value.model_dir == '/test/does-not-exist'
