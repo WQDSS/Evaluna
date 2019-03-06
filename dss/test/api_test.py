@@ -95,11 +95,14 @@ def test_add_model(api, tmp_path):
         z.write(file_a)
         z.write(file_b)
         
-    files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}
-    with mock.patch('processing.add_model') as add_model:
-        resp = api.requests.post("/add-model", files=files)
+    files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}    
+    resp = api.requests.post("/add-model", files=files)
     
     model_added_resp = resp.json()
     assert 'model_name' in model_added_resp
     assert model_added_resp['model_name'] == 'test_model'
-    add_model.assert_called_once_with('test_model', model_zip.read_bytes())
+    list_models_resp = api.requests.get('/models')
+    models_list = list_models_resp.json()
+    assert 'test_model' in models_list['models']
+
+

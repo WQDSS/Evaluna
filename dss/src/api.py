@@ -50,7 +50,7 @@ async def exec_dss(req, resp):
     resp.media = {"id" : exec_id}
 
 @api.route("/add-model")
-async def add_model(req, resp)    :
+async def add_model(req, resp):
     """
     Upload a directory containing a calibrated model, receives an identifier for that model
     """
@@ -60,6 +60,17 @@ async def add_model(req, resp)    :
     processing.add_model(model_name, model_contents)
     logger.info("Added model %s", model_name)
     resp.media = {"model_name" : model_name}
+
+
+@api.route("/models")
+async def models(req, resp):
+    '''
+    Return all models currently registered
+    '''    
+    resp.media = {"models" : list(processing.get_models())}
+    logging.info('returned model list')
+
+
 
 if __name__ == "__main__":
     logger.info("app started!")
