@@ -49,17 +49,18 @@ def test_dss_execution(api, tmp_path):
     RESPONSE={"score" : 4.2}    
 
     file_obj = tmp_path / "data.t"
-    file_obj.write_bytes(INPUT_EXAMPLE.encode())
-    PROCESSING_DURATION = 1
+    file_obj.write_bytes(INPUT_EXAMPLE.encode())    
     
     files = {'input': (file_obj.name, file_obj.read_bytes(), 'application/json')}
-    data = {'processing_duration' : PROCESSING_DURATION}
+    data = {'model_name': 'some_model'}
        
     start_event = asyncio.Event()
 
     async def my_execute(params):        
-        await start_event.wait()        
-        assert params == json.loads(INPUT_EXAMPLE)
+        await start_event.wait()
+        expected_params = json.loads(INPUT_EXAMPLE)
+        expected_params['model_run']['model_name'] = 'some_model'
+        assert params == expected_params
         return RESPONSE
 
 

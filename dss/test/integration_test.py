@@ -30,10 +30,10 @@ def test_against_docker():
 
     with open('/test/mock_input.json', 'rb') as f:
         mock_input = json.load(f)
-    
-    mock_input['model_run']['model_name'] = model_name
-    files = {'input': ('input', json.dumps(mock_input), 'application/json')}        
-    resp = requests.post(f"{BASE_URL}/dss", files=files)            
+        
+    files = {'input': ('input', json.dumps(mock_input), 'application/json')}
+    data = {'model_name': model_name}    
+    resp = requests.post(f"{BASE_URL}/dss", files=files, data=data)            
 
     model_response = resp.json()
     assert 'id' in model_response
