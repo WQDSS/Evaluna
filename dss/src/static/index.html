@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>WQ2 Decision Support System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 
+        <link rel="stylesheet" type="text/css" media="screen" href="main.css">
+    -->
+    <script src="static/main.js"></script>
+    <script lang="javascript"> 
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectElement = document.getElementById("select-model-list")
+            const formElement = document.getElementById("form-dss")
+            const resultElement = document.getElementById("div-results")
+            setup(selectElement, formElement, resultElement)
+        })
+    </script>
+</head>
+<body>    
+    <div id="div-dss-submit">
+        <form id="form-dss">
+            <p><label for="select-model-list">Model:</label><select id="select-model-list" name="model_name"></select></p>
+            <p><label for="input-params-file">Execution Parameters File:</label><input id="input-params-file" name="input" type="file"></input></p>       
+            <p><button type="submit" id="button-submit-dss">Execute DSS</button></p>
+        </form>
+    </div>
+    <div id="div-results">
+
+    </div>
+</body>
+</html>

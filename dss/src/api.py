@@ -36,6 +36,7 @@ async def exec_dss(req, resp):
     Get the uploaded file, execute the dss in the background (multiple executions of the model)
     """
     media = await req.media('files')
+    logging.debug("%s", str(media))
     params = json.loads(media['input']['content'])
     if 'model_name' in media:
         params['model_run']['model_name'] = media['model_name'].decode()

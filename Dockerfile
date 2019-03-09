@@ -30,6 +30,7 @@ COPY data/mock_stream_A/* /models/default/
 
 # copy the contents of the app
 COPY dss/src/ /app/src/
+RUN ln -s /app/src/static /app/static
 
 FROM base-with-devel-deps as test
 # copy the contents of the app
