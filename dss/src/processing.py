@@ -241,5 +241,7 @@ def add_model(model_name, model_contents):
     MODELS[model_name] = model_dir
 
     
-    
+def get_models():
+    for m in MODELS:
+        yield m
 

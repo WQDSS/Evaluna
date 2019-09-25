@@ -34,8 +34,12 @@ async def status(req, resp, * , exec_id):
 async def exec_dss(req, resp):
     """
     Get the uploaded file, execute the dss in the background (multiple executions of the model)
-    """    
-    params = json.loads((await req.media('files'))['input']['content'])
+    """
+    media = await req.media('files')
+    logging.debug("%s", str(media))
+    params = json.loads(media['input']['content'])
+    if 'model_name' in media:
+        params['model_run']['model_name'] = media['model_name'].decode()
 
 
     exec_id = processing.get_exec_id()    
@@ -50,7 +54,7 @@ async def exec_dss(req, resp):
     resp.media = {"id" : exec_id}
 
 @api.route("/add-model")
-async def add_model(req, resp)    :
+async def add_model(req, resp):
     """
     Upload a directory containing a calibrated model, receives an identifier for that model
     """
@@ -61,11 +65,24 @@ async def add_model(req, resp)    :
     logger.info("Added model %s", model_name)
     resp.media = {"model_name" : model_name}
 
-if __name__ == "__main__":
+
+@api.route("/models")
+async def models(req, resp):
+    '''
+    Return all models currently registered
+    '''    
+    resp.media = {"models" : list(processing.get_models())}
+    logging.info('returned model list')
+
+
+if __name__ == "__main__":    
     logger.info("app started!")
     debug = os.environ.get("DEBUG", False)
     log_level = 'debug' if debug else 'info'
     if debug:
         log_level='debug'
+    
+    # add rendering of index.html as the default route
+    api.add_route("/", static=True)    
     api.run(debug=debug, log_level=log_level)
 

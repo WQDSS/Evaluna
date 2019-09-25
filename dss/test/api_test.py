@@ -49,17 +49,18 @@ def test_dss_execution(api, tmp_path):
     RESPONSE={"score" : 4.2}    
 
     file_obj = tmp_path / "data.t"
-    file_obj.write_bytes(INPUT_EXAMPLE.encode())
-    PROCESSING_DURATION = 1
+    file_obj.write_bytes(INPUT_EXAMPLE.encode())    
     
     files = {'input': (file_obj.name, file_obj.read_bytes(), 'application/json')}
-    data = {'processing_duration' : PROCESSING_DURATION}
+    data = {'model_name': 'some_model'}
        
     start_event = asyncio.Event()
 
     async def my_execute(params):        
-        await start_event.wait()        
-        assert params == json.loads(INPUT_EXAMPLE)
+        await start_event.wait()
+        expected_params = json.loads(INPUT_EXAMPLE)
+        expected_params['model_run']['model_name'] = 'some_model'
+        assert params == expected_params
         return RESPONSE
 
 
@@ -95,11 +96,14 @@ def test_add_model(api, tmp_path):
         z.write(file_a)
         z.write(file_b)
         
-    files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}
-    with mock.patch('processing.add_model') as add_model:
-        resp = api.requests.post("/add-model", files=files)
+    files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}    
+    resp = api.requests.post("/add-model", files=files)
     
     model_added_resp = resp.json()
     assert 'model_name' in model_added_resp
     assert model_added_resp['model_name'] == 'test_model'
-    add_model.assert_called_once_with('test_model', model_zip.read_bytes())
+    list_models_resp = api.requests.get('/models')
+    models_list = list_models_resp.json()
+    assert 'test_model' in models_list['models']
+
+
