@@ -1,0 +1,1167 @@
+  PSU W2 Model Version 3.7/4.1
+
+TITLE C ...............................TITLE....................................
+        Version 4.1 Yarqon river
+        Example, with simplyfied bathymetry and no calibreation
+        
+        
+        
+        
+        
+        Yoav Bornstein, Haifa University
+        
+        
+        
+GRID         NWB     NBR     IMX     KMX   NPROC  CLOSEC
+               1       1      43      39       1     OFF        
+
+IN/OUTFL     NTR     NST     NIW     NWD     NGT     NSP     NPI     NPU
+               2       0       0       0       0       0       0       0
+
+CONSTITU     NGC     NSS     NAL     NEP    NBOD     NMC     NZP
+               5       1       3       1      10       0       1
+
+MISCELL     NDAY SELECTC HABTATC ENVIRPC AERATEC INITUWL
+              10     OFF     OFF     OFF     OFF      ON
+
+TIME CON  TMSTRT   TMEND    YEAR
+         121.000 131.000    2019
+
+DLT CON      NDT  DLTMIN DLTINTR
+               2 0.10000      ON
+
+DLT DATE    DLTD    DLTD    DLTD    DLTD    DLTD    DLTD    DLTD    DLTD    DLTD
+         119.000 122.000
+
+DLT MAX   DLTMAX  DLTMAX  DLTMAX  DLTMAX  DLTMAX  DLTMAX  DLTMAX  DLTMAX  DLTMAX
+         0.20000 10.0000
+
+DLT FRN     DLTF    DLTF    DLTF    DLTF    DLTF    DLTF    DLTF    DLTF    DLTF
+         0.90000 0.90000
+
+DLT LIMI    VISC    CELC
+WB 1          ON      ON
+
+BRANCH G      US      DS     UHS     DHS     UQB     DQB   NLMIN   SLOPE  SLOPEC
+BR1            2      42       0       0       0       0       1 0.00000 0.00000
+
+LOCATION     LAT    LONG    EBOT      BS      BE    JBDN
+WB 1     32.1240 34.9060 2.00000       1       1       1
+
+INIT CND     T2I    ICEI  WTYPEC   GRIDC
+WB 1     23.1000 0.00000   FRESH    RECT
+
+CALCULAT     VBC     EBC     MBC     PQC     EVC     PRC
+WB 1          ON      ON      ON     OFF      ON     OFF
+
+DEAD SEA   WINDC    QINC   QOUTC   HEATC
+WB 1          ON      ON      ON      ON
+
+INTERPOL   QINIC   DTRIC    HDIC
+BR1           ON     OFF      ON
+
+HEAT EXCH  SLHTC    SROC  RHEVAP   METIC  FETCHC     AFW     BFW     CFW   WINDH
+WB 1        TERM      ON     OFF      ON     OFF 9.20000 0.46000 2.00000 2.00000
+
+ICE COVE    ICEC  SLICEC  ALBEDO   HWICE    BICE    GICE  ICEMIN   ICET2
+WB 1         OFF  DETAIL 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+
+TRANSPOR   SLTRC   THETA
+WB 1    ULTIMATE 0.55000
+
+HYD COEF      AX      DX    CBHE    TSED      FI   TSEDF   FRICC      Z0
+WB 1     1.00000 1.00000 0.30000 20.2000 0.01000 1.00000   CHEZY 0.00100
+
+EDDY VISC    AZC   AZSLC   AZMAX     FBC       E   ARODI STRCKLR BOUNDFR  TKECAL
+WB 1         TKE     IMP 1.00000       3 9.53500 0.43100 24.0000 10.0000     IMP
+
+N STRUC     NSTR DYNELEV
+BR1            0     OFF
+
+STR INT    STRIC   STRIC   STRIC   STRIC   STRIC   STRIC   STRIC   STRIC   STRIC
+BR 1    
+
+STR TOP    KTSTR   KTSTR   KTSTR   KTSTR   KTSTR   KTSTR   KTSTR   KTSTR   KTSTR
+BR1     
+
+STR BOT    KBSTR   KBSTR   KBSTR   KBSTR   KBSTR   KBSTR   KBSTR   KBSTR   KBSTR
+BR1     
+
+STR SINK   SINKC   SINKC   SINKC   SINKC   SINKC   SINKC   SINKC   SINKC   SINKC
+BR1     
+
+STR ELEV    ESTR    ESTR    ESTR    ESTR    ESTR    ESTR    ESTR    ESTR    ESTR
+BR1     
+
+STR WIDT    WSTR    WSTR    WSTR    WSTR    WSTR    WSTR    WSTR    WSTR    WSTR
+BR1     
+
+PIPES       IUPI    IDPI    EUPI    EDPI     WPI   DLXPI     FPI  FMINPI   WTHLC DYNPIPE
+
+
+PIPE UP    PUPIC   ETUPI   EBUPI   KTUPI   KBUPI
+
+
+PIPE DOWN  PDPIC   ETDPI   EBDPI   KTDPI   KBDPI
+
+
+SPILLWAY    IUSP    IDSP     ESP    A1SP    B1SP    A2SP    B2SP   WTHLC
+
+
+SPILL UP   PUSPC   ETUSP   EBUSP   KTUSP   KBUSP
+
+
+SPILL DOWN PDSPC   ETUSP   EBUSP   KTDSP   KBDSP
+
+
+SPILL GAS GASSPC    EQSP  AGASSP  BGASSP  CGASSP
+
+
+GATES       IUGT    IDGT     EGT    A1GT    B1GT    G1GT    A2GT    B2GT    G2GT   WTHLC
+
+
+GATE WEIR   GTA1    GTB1    GTA2    GTB2  DYNVAR    GTIC
+
+
+GATE UP    PUGTC   ETUGT   EBUGT   KTUGT   KBUGT
+
+
+GATE DOWN  PDGTC   ETDGT   EBDGT   KTDGT   KBDGT
+
+
+GATE GAS  GASGTC    EQGT  AGASGT  BGASGT  CGASGT
+
+
+PUMPS 1     IUPU    IDPU     EPU  STRTPU   ENDPU   EONPU  EOFFPU     QPU   WTHLC DYNPUMP
+
+
+PUMPS 2     PPUC    ETPU    EBPU    KTPU    KBPU
+
+
+WEIR SEG     IWR     IWR     IWR     IWR     IWR     IWR     IWR     IWR     IWR
+        
+
+WEIR TOP    KTWR    KTWR    KTWR    KTWR    KTWR    KTWR    KTWR    KTWR    KTWR
+        
+
+WEIR BOT    KBWR    KBWR    KBWR    KBWR    KBWR    KBWR    KBWR    KBWR    KBWR
+        
+
+WD INT      WDIC    WDIC    WDIC    WDIC    WDIC    WDIC    WDIC    WDIC    WDIC
+        
+
+WD SEG       IWD     IWD     IWD     IWD     IWD     IWD     IWD     IWD     IWD
+        
+
+WD ELEV      EWD     EWD     EWD     EWD     EWD     EWD     EWD     EWD     EWD
+        
+
+WD TOP      KTWD    KTWD    KTWD    KTWD    KTWD    KTWD    KTWD    KTWD    KTWD
+        
+
+WD BOT      KBWD    KBWD    KBWD    KBWD    KBWD    KBWD    KBWD    KBWD    KBWD
+        
+
+TRIB PLA    PTRC    PTRC    PTRC    PTRC    PTRC    PTRC    PTRC    PTRC    PTRC
+           DISTR   DISTR
+
+TRIB INT    TRIC    TRIC    TRIC    TRIC    TRIC    TRIC    TRIC    TRIC    TRIC
+              ON      ON
+
+TRIB SEG     ITR     ITR     ITR     ITR     ITR     ITR     ITR     ITR     ITR
+              18      21
+
+TRIB TOP   ELTRT   ELTRT   ELTRT   ELTRT   ELTRT   ELTRT   ELTRT   ELTRT   ELTRT
+         11.5000 10.0000
+
+TRIB BOT   ELTRB   ELTRB   ELTRB   ELTRB   ELTRB   ELTRB   ELTRB   ELTRB   ELTRB
+         9.50000 8.00000
+
+DST TRIB    DTRC    DTRC    DTRC    DTRC    DTRC    DTRC    DTRC    DTRC    DTRC
+BR 1         OFF
+
+HYD PRIN  HPRWBC  HPRWBC  HPRWBC  HPRWBC  HPRWBC  HPRWBC  HPRWBC  HPRWBC  HPRWBC
+NVIOL        OFF
+U            OFF
+W            OFF
+T             ON
+RHO          OFF
+AZ           OFF
+SHEAR        OFF
+ST           OFF
+SB           OFF
+ADMX         OFF
+DM           OFF
+HDG          OFF
+ADMZ         OFF
+HPG          OFF
+GRAV         OFF
+
+SNP PRINT   SNPC    NSNP   NISNP
+WB 1         OFF       2       2
+
+SNP DATE    SNPD    SNPD    SNPD    SNPD    SNPD    SNPD    SNPD    SNPD    SNPD
+WB 1     121.000 217.000
+
+SNP FREQ    SNPF    SNPF    SNPF    SNPF    SNPF    SNPF    SNPF    SNPF    SNPF
+WB 1     1.00000 1.00000
+
+SNP SEG     ISNP    ISNP    ISNP    ISNP    ISNP    ISNP    ISNP    ISNP    ISNP
+WB 1          11      17
+
+SCR PRINT   SCRC    NSCR
+WB 1          ON       1
+
+SCR DATE    SCRD    SCRD    SCRD    SCRD    SCRD    SCRD    SCRD    SCRD    SCRD
+WB 1     1.00000
+
+SCR FREQ    SCRF    SCRF    SCRF    SCRF    SCRF    SCRF    SCRF    SCRF    SCRF
+WB 1     1.00000
+
+PRF PLOT    PRFC    NPRF   NIPRF
+WB 1         OFF       0       0
+
+PRF DATE    PRFD    PRFD    PRFD    PRFD    PRFD    PRFD    PRFD    PRFD    PRFD
+WB 1    
+
+PRF FREQ    PRFF    PRFF    PRFF    PRFF    PRFF    PRFF    PRFF    PRFF    PRFF
+WB 1    
+
+PRF SEG     IPRF    IPRF    IPRF    IPRF    IPRF    IPRF    IPRF    IPRF    IPRF
+WB 1    
+
+SPR PLOT    SPRC    NSPR   NISPR
+WB 1         OFF       0       0
+
+SPR DATE    SPRD    SPRD    SPRD    SPRD    SPRD    SPRD    SPRD    SPRD    SPRD
+WB 1    
+
+SPR FREQ    SPRF    SPRF    SPRF    SPRF    SPRF    SPRF    SPRF    SPRF    SPRF
+WB 1    
+
+SPR SEG     ISPR    ISPR    ISPR    ISPR    ISPR    ISPR    ISPR    ISPR    ISPR
+WB 1    
+
+VPL PLOT    VPLC    NVPL
+WB 1         OFF       0
+
+VPL DATE    VPLD    VPLD    VPLD    VPLD    VPLD    VPLD    VPLD    VPLD    VPLD
+WB 1    
+
+VPL FREQ    VPLF    VPLF    VPLF    VPLF    VPLF    VPLF    VPLF    VPLF    VPLF
+WB 1    
+
+CPL PLOT    CPLC    NCPL TECPLOT
+WB 1         OFF       0     OFF
+
+CPL DATE    CPLD    CPLD    CPLD    CPLD    CPLD    CPLD    CPLD    CPLD    CPLD
+WB 1    
+
+CPL FREQ    CPLF    CPLF    CPLF    CPLF    CPLF    CPLF    CPLF    CPLF    CPLF
+WB 1    
+
+FLUXES      FLXC    NFLX
+WB 1         OFF       0
+
+FLX DATE    FLXD    FLXD    FLXD    FLXD    FLXD    FLXD    FLXD    FLXD    FLXD
+WB 1    
+
+FLX FREQ    FLXF    FLXF    FLXF    FLXF    FLXF    FLXF    FLXF    FLXF    FLXF
+WB 1    
+
+TSR PLOT    TSRC    NTSR   NITSR
+              ON       1       1
+
+TSR DATE    TSRD    TSRD    TSRD    TSRD    TSRD    TSRD    TSRD    TSRD    TSRD
+         120.000
+
+TSR FREQ    TSRF    TSRF    TSRF    TSRF    TSRF    TSRF    TSRF    TSRF    TSRF
+         1.00000
+
+TSR SEG     ITSR    ITSR    ITSR    ITSR    ITSR    ITSR    ITSR    ITSR    ITSR
+              42
+
+TSR LAYE    ETSR    ETSR    ETSR    ETSR    ETSR    ETSR    ETSR    ETSR    ETSR
+         0.00000
+
+WITH OUT    WDOC    NWDO   NIWDO
+             OFF       1       1
+
+WITH DAT    WDOD    WDOD    WDOD    WDOD    WDOD    WDOD    WDOD    WDOD    WDOD
+         1.00000
+
+WITH FRE    WDOF    WDOF    WDOF    WDOF    WDOF    WDOF    WDOF    WDOF    WDOF
+         0.20000
+
+WITH SEG    IWDO    IWDO    IWDO    IWDO    IWDO    IWDO    IWDO    IWDO    IWDO
+              10
+
+RESTART     RSOC    NRSO    RSIC
+             OFF       0     OFF
+
+RSO DATE    RSOD    RSOD    RSOD    RSOD    RSOD    RSOD    RSOD    RSOD    RSOD
+        
+
+RSO FREQ    RSOF    RSOF    RSOF    RSOF    RSOF    RSOF    RSOF    RSOF    RSOF
+        
+
+CST COMP     CCC    LIMC     CUF
+              ON     OFF       2
+
+CST ACTIVE   CAC
+TDS           ON
+Gen1          ON
+Gen2         OFF
+Gen3         OFF
+Gen4         OFF
+Gen5         OFF
+ISS1          ON
+PO4           ON
+NH4           ON
+NO3           ON
+DSI          OFF
+PSI          OFF
+FE           OFF
+LDOM          ON
+RDOM          ON
+LPOM          ON
+RPOM          ON
+BOD1          ON
+BOD2          ON
+BOD3          ON
+BOD4          ON
+BOD5          ON
+BOD6          ON
+BOD7          ON
+BOD8          ON
+BOD9          ON
+BOD10         ON
+BODP1         ON
+BODP2         ON
+BODP3         ON
+BODP4         ON
+BODP5         ON
+BODP6         ON
+BODP7         ON
+BODP8         ON
+BODP9         ON
+BODP10        ON
+BODN1         ON
+BODN2         ON
+BODN3         ON
+BODN4         ON
+BODN5         ON
+BODN6         ON
+BODN7         ON
+BODN8         ON
+BODN9         ON
+BODN10        ON
+ALG1          ON
+ALG2          ON
+ALG3          ON
+DO            ON
+TIC           ON
+ALK           ON
+ZOO1         OFF
+LDOM-P        ON
+RDOM-P        ON
+LPOM-P        ON
+RPOM-P        ON
+LDOM-N        ON
+RDOM-N        ON
+LPOM-N        ON
+RPOM-N        ON
+
+CST DERI   CDWBC   CDWBC   CDWBC   CDWBC   CDWBC   CDWBC   CDWBC   CDWBC   CDWBC
+DOC           ON
+POC          OFF
+TOC           ON
+DON          OFF
+PON          OFF
+TON           ON
+TKN           ON
+TN            ON
+DOP          OFF
+POP          OFF
+TOP           ON
+TP            ON
+APR          OFF
+CHLA          ON
+ATOT         OFF
+%DO          OFF
+TSS           ON
+TISS         OFF
+CBOD          ON
+pH            ON
+CO2          OFF
+HCO3         OFF
+CO3          OFF
+
+CST FLUX   CFWBC   CFWBC   CFWBC   CFWBC   CFWBC   CFWBC   CFWBC   CFWBC   CFWBC
+TISSIN       OFF
+TISSOUT      OFF
+PO4AR        OFF
+PO4AG        OFF
+PO4AP        OFF
+PO4ER        OFF
+PO4EG        OFF
+PO4EP        OFF
+PO4POM       OFF
+PO4DOM       OFF
+PO4OM        OFF
+PO4SED       OFF
+PO4SOD       OFF
+PO4SET       OFF
+NH4NITR      OFF
+NH4AR        OFF
+NH4AG        OFF
+NH4AP        OFF
+NH4ER        OFF
+NH4EG        OFF
+NH4EP        OFF
+NH4POM       OFF
+NH4DOM       OFF
+NH4OM        OFF
+NH4SED       OFF
+NH4SOD       OFF
+NO3DEN       OFF
+NO3AG        OFF
+NO3EG        OFF
+NO3SED       OFF
+DSIAG        OFF
+DSIEG        OFF
+DSIPIS       OFF
+DSISED       OFF
+DSISOD       OFF
+DSISET       OFF
+PSIAM        OFF
+PSINET       OFF
+PSIDK        OFF
+FESET        OFF
+FESED        OFF
+LDOMDK       OFF
+LRDOM        OFF
+RDOMDK       OFF
+LDOMAP       OFF
+LDOMEP       OFF
+LPOMDK       OFF
+LRPOM        OFF
+RPOMDK       OFF
+LPOMAP       OFF
+LPOMEP       OFF
+LPOMSET      OFF
+RPOMSET      OFF
+CBODDK       OFF
+DOAP         OFF
+DOAR         OFF
+DOEP         OFF
+DOER         OFF
+DOPOM        OFF
+DODOM        OFF
+DOOM         OFF
+DONITR       OFF
+DOCBOD       OFF
+DOREAR       OFF
+DOSED        OFF
+DOSOD        OFF
+TICAG        OFF
+TICEG        OFF
+SEDDK        OFF
+SEDAS        OFF
+SEDLPOM      OFF
+SEDSET       OFF
+SODDK        OFF
+
+CST ICON   C2IWB   C2IWB   C2IWB   C2IWB   C2IWB   C2IWB   C2IWB   C2IWB   C2IWB
+TDS      0.00000
+Gen1     0.00000
+Gen2     0.00000
+Gen3     0.00000
+Gen4     0.00000
+Gen5     0.00000
+ISS1     0.00000
+PO4      0.70000
+NH4      2.00000
+NO3      0.30000
+DSI      0.00000
+PSI      0.00000
+FE       0.00000
+LDOM     0.00000
+RDOM     0.10000
+LPOM     0.10000
+RPOM     0.10000
+BOD1     0.00000
+BOD2     0.00000
+BOD3     0.00000
+BOD4     0.00000
+BOD5     0.00000
+BOD6     0.00000
+BOD7     0.00000
+BOD8     0.00000
+BOD9     0.00000
+BOD10    0.00000
+BODP1    0.00000
+BODP2    0.00000
+BODP3    0.00000
+BODP4    0.00000
+BODP5    0.00000
+BODP6    0.00000
+BODP7    0.00000
+BODP8    0.00000
+BODP9    0.00000
+BODP10   0.00000
+BODN1    0.00000
+BODN2    0.00000
+BODN3    0.00000
+BODN4    0.00000
+BODN5    0.00000
+BODN6    0.00000
+BODN7    0.00000
+BODN8    0.00000
+BODN9    0.00000
+BODN10   0.00000
+ALG1     0.00000
+ALG2     0.10000
+ALG3     0.10000
+DO       5.00000
+TIC      5.00000
+ALK      19.8000
+ZOO1     0.00000
+LDOM-P   0.00050
+RDOM-P   0.00050
+LPOM-P   0.00050
+RPOM-P   0.00050
+LDOM-N   0.00800
+RDOM-N   0.00800
+LPOM-N   0.00800
+RPOM-N   0.00800
+
+CST PRIN  CPRWBC  CPRWBC  CPRWBC  CPRWBC  CPRWBC  CPRWBC  CPRWBC  CPRWBC  CPRWBC
+TDS           ON
+Gen1          ON
+Gen2          ON
+Gen3          ON
+Gen4          ON
+Gen5          ON
+ISS1          ON
+PO4           ON
+NH4           ON
+NO3           ON
+DSI          OFF
+PSI          OFF
+FE           OFF
+LDOM          ON
+RDOM          ON
+LPOM          ON
+RPOM          ON
+BOD1          ON
+BOD2          ON
+BOD3          ON
+BOD4          ON
+BOD5          ON
+BOD6          ON
+BOD7          ON
+BOD8          ON
+BOD9          ON
+BOD10         ON
+BODP1         ON
+BODP2         ON
+BODP3         ON
+BODP4         ON
+BODP5         ON
+BODP6         ON
+BODP7         ON
+BODP8         ON
+BODP9         ON
+BODP10        ON
+BODN1         ON
+BODN2         ON
+BODN3         ON
+BODN4         ON
+BODN5         ON
+BODN6         ON
+BODN7         ON
+BODN8         ON
+BODN9         ON
+BODN10        ON
+ALG1          ON
+ALG2          ON
+ALG3          ON
+DO            ON
+TIC           ON
+ALK           ON
+ZOO1         OFF
+LDOM-P        ON
+RDOM-P        ON
+LPOM-P        ON
+RPOM-P        ON
+LDOM-N        ON
+RDOM-N        ON
+LPOM-N        ON
+RPOM-N        ON
+
+CIN CON   CINBRC  CINBRC  CINBRC  CINBRC  CINBRC  CINBRC  CINBRC  CINBRC  CINBRC
+TDS          OFF
+Gen1         OFF
+Gen2         OFF
+Gen3         OFF
+Gen4         OFF
+Gen5         OFF
+ISS1         OFF
+PO4          OFF
+NH4           ON
+NO3          OFF
+DSI          OFF
+PSI          OFF
+FE           OFF
+LDOM         OFF
+RDOM         OFF
+LPOM         OFF
+RPOM         OFF
+BOD1         OFF
+BOD2         OFF
+BOD3         OFF
+BOD4         OFF
+BOD5         OFF
+BOD6         OFF
+BOD7         OFF
+BOD8         OFF
+BOD9         OFF
+BOD10        OFF
+BODP1        OFF
+BODP2        OFF
+BODP3        OFF
+BODP4        OFF
+BODP5        OFF
+BODP6        OFF
+BODP7        OFF
+BODP8        OFF
+BODP9        OFF
+BODP10       OFF
+BODN1        OFF
+BODN2        OFF
+BODN3        OFF
+BODN4        OFF
+BODN5        OFF
+BODN6        OFF
+BODN7        OFF
+BODN8        OFF
+BODN9        OFF
+BODN10       OFF
+ALG1         OFF
+ALG2         OFF
+ALG3         OFF
+DO           OFF
+TIC          OFF
+ALK          OFF
+ZOO1         OFF
+LDOM-P       OFF
+RDOM-P       OFF
+LPOM-P       OFF
+RPOM-P       OFF
+LDOM-N       OFF
+RDOM-N       OFF
+LPOM-N       OFF
+RPOM-N       OFF
+
+CTR CON   CTRTRC  CTRTRC  CTRTRC  CTRTRC  CTRTRC  CTRTRC  CTRTRC  CTRTRC  CTRTRC
+TDS          OFF     OFF
+Gen1         OFF     OFF
+Gen2         OFF     OFF
+Gen3         OFF     OFF
+Gen4         OFF     OFF
+Gen5         OFF     OFF
+ISS1         OFF     OFF
+PO4          OFF     OFF
+NH4           ON      ON
+NO3          OFF     OFF
+DSI          OFF     OFF
+PSI          OFF     OFF
+FE           OFF     OFF
+LDOM         OFF     OFF
+RDOM         OFF     OFF
+LPOM         OFF     OFF
+RPOM         OFF     OFF
+BOD1         OFF     OFF
+BOD2         OFF     OFF
+BOD3         OFF     OFF
+BOD4         OFF     OFF
+BOD5         OFF     OFF
+BOD6         OFF     OFF
+BOD7         OFF     OFF
+BOD8         OFF     OFF
+BOD9         OFF     OFF
+BOD10        OFF     OFF
+BODP1        OFF     OFF
+BODP2        OFF     OFF
+BODP3        OFF     OFF
+BODP4        OFF     OFF
+BODP5        OFF     OFF
+BODP6        OFF     OFF
+BODP7        OFF     OFF
+BODP8        OFF     OFF
+BODP9        OFF     OFF
+BODP10       OFF     OFF
+BODN1        OFF     OFF
+BODN2        OFF     OFF
+BODN3        OFF     OFF
+BODN4        OFF     OFF
+BODN5        OFF     OFF
+BODN6        OFF     OFF
+BODN7        OFF     OFF
+BODN8        OFF     OFF
+BODN9        OFF     OFF
+BODN10       OFF     OFF
+ALG1         OFF     OFF
+ALG2         OFF     OFF
+ALG3         OFF     OFF
+DO           OFF     OFF
+TIC          OFF     OFF
+ALK          OFF     OFF
+ZOO1         OFF     OFF
+LDOM-P       OFF     OFF
+RDOM-P       OFF     OFF
+LPOM-P       OFF     OFF
+RPOM-P       OFF     OFF
+LDOM-N       OFF     OFF
+RDOM-N       OFF     OFF
+LPOM-N       OFF     OFF
+RPOM-N       OFF     OFF
+
+CDT CON   CDTBRC  CDTBRC  CDTBRC  CDTBRC  CDTBRC  CDTBRC  CDTBRC  CDTBRC  CDTBRC
+TDS           ON
+Gen1         OFF
+Gen2          ON
+Gen3          ON
+Gen4          ON
+Gen5          ON
+ISS1          ON
+PO4           ON
+NH4           ON
+NO3           ON
+DSI          OFF
+PSI          OFF
+FE           OFF
+LDOM          ON
+RDOM          ON
+LPOM          ON
+RPOM          ON
+BOD1          ON
+BOD2          ON
+BOD3          ON
+BOD4          ON
+BOD5          ON
+BOD6          ON
+BOD7          ON
+BOD8          ON
+BOD9          ON
+BOD10         ON
+BODP1         ON
+BODP2         ON
+BODP3         ON
+BODP4         ON
+BODP5         ON
+BODP6         ON
+BODP7         ON
+BODP8         ON
+BODP9         ON
+BODP10        ON
+BODN1         ON
+BODN2         ON
+BODN3         ON
+BODN4         ON
+BODN5         ON
+BODN6         ON
+BODN7         ON
+BODN8         ON
+BODN9         ON
+BODN10        ON
+ALG1          ON
+ALG2          ON
+ALG3          ON
+DO            ON
+TIC           ON
+ALK           ON
+ZOO1         OFF
+LDOM-P        ON
+RDOM-P        ON
+LPOM-P        ON
+RPOM-P        ON
+LDOM-N        ON
+RDOM-N        ON
+LPOM-N        ON
+RPOM-N        ON
+
+CPR CON   CPRBRC  CPRBRC  CPRBRC  CPRBRC  CPRBRC  CPRBRC  CPRBRC  CPRBRC  CPRBRC
+TDS           ON
+Gen1         OFF
+Gen2          ON
+Gen3          ON
+Gen4          ON
+Gen5          ON
+ISS1          ON
+PO4           ON
+NH4           ON
+NO3           ON
+DSI          OFF
+PSI          OFF
+FE           OFF
+LDOM          ON
+RDOM          ON
+LPOM          ON
+RPOM          ON
+BOD1          ON
+BOD2          ON
+BOD3          ON
+BOD4          ON
+BOD5          ON
+BOD6          ON
+BOD7          ON
+BOD8          ON
+BOD9          ON
+BOD10         ON
+BODP1         ON
+BODP2         ON
+BODP3         ON
+BODP4         ON
+BODP5         ON
+BODP6         ON
+BODP7         ON
+BODP8         ON
+BODP9         ON
+BODP10        ON
+BODN1         ON
+BODN2         ON
+BODN3         ON
+BODN4         ON
+BODN5         ON
+BODN6         ON
+BODN7         ON
+BODN8         ON
+BODN9         ON
+BODN10        ON
+ALG1          ON
+ALG2          ON
+ALG3          ON
+DO            ON
+TIC           ON
+ALK           ON
+ZOO1         OFF
+LDOM-P        ON
+RDOM-P        ON
+LPOM-P        ON
+RPOM-P        ON
+LDOM-N        ON
+RDOM-N        ON
+LPOM-N        ON
+RPOM-N        ON
+
+EX COEF    EXH2O    EXSS    EXOM    BETA     EXC    EXIC
+WB 1     0.25000 0.01000 0.40000 0.45000     OFF     OFF
+
+ALG EX       EXA     EXA     EXA     EXA     EXA     EXA
+         0.10000 0.10000 0.10000
+
+ZOO EX       EXZ     EXZ     EXZ     EXZ     EXZ     EXZ
+         0.20000
+
+MACRO EX     EXM     EXM     EXM     EXM     EXM     EXM
+         0.01000
+
+GENERIC    CGQ10   CG0DK   CG1DK     CGS   CGLDK   CGKLF    CGCS
+CG 1     0.00000 -1.0000 0.00000 0.00000 0.00000 0.00000 0.00000
+CG 2     0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+CG 3     1.04000 0.00000 0.50000 0.00000 0.00000 0.00000 0.00000
+CG 4     0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+CG 5     0.00000 0.00000 0.00000 0.00000 0.00000 0.00000 0.00000
+
+S SOLIDS     SSS   SEDRC   TAUCR
+SS# 1    1.50000     OFF 0.00000
+
+ALGAL RATE    AG      AR      AE      AM      AS    AHSP    AHSN   AHSSI    ASAT
+ALG1     1.50000 0.04000 0.04000 0.10000 0.20000 0.00300 0.01400 0.00000 40.0000
+ALG2     1.50000 0.04000 0.04000 0.10000 0.20000 0.00300 0.01400 0.00000 75.0000
+ALG3     1.70000 0.04000 0.04000 0.10000 0.01000 0.00300 0.01400 0.00000 125.000
+
+ALGAL TEMP   AT1     AT2     AT3     AT4     AK1     AK2     AK3     AK4
+ALG1     8.00000 10.0000 18.0000 22.0000 0.10000 0.99000 0.99000 0.10000
+ALG2     10.0000 16.0000 20.0000 25.0000 0.10000 0.99000 0.99000 0.10000
+ALG3     24.3000 27.0000 35.0000 40.0000 0.10000 0.99000 0.99000 0.10000
+
+ALG STOI    ALGP    ALGN    ALGC   ALGSI   ACHLA   ALPOM   ANEQN    ANPR
+ALG1     0.00500 0.08000 0.45000 0.00000 0.05000 0.80000       2 0.00100
+ALG2     0.00500 0.08000 0.45000 0.00000 0.20000 0.80000       2 0.00100
+ALG3     0.00420 0.08000 0.45000 0.00000 0.20000 0.80000       2 0.00100
+
+EPIPHYTE    EPIC    EPIC    EPIC    EPIC    EPIC    EPIC    EPIC    EPIC    EPIC
+EPI1          ON
+
+EPI PRIN    EPRC    EPRC    EPRC    EPRC    EPRC    EPRC    EPRC    EPRC    EPRC
+EPI1          ON
+
+EPI INIT   EPICI   EPICI   EPICI   EPICI   EPICI   EPICI   EPICI   EPICI   EPICI
+EPI1     10.0000
+
+EPI RATE      EG      ER      EE      EM      EB    EHSP    EHSN   EHSSI
+EPI1     1.20000 0.04000 0.04000 0.10000 0.00100 0.00300 0.01400 0.00000
+
+EPI HALF    ESAT     EHS   ENEQN    ENPR
+EPI1     150.000 25.0000       2 0.00500
+
+EPI TEMP     ET1     ET2     ET3     ET4     EK1     EK2     EK3     EK4
+EPI1     1.00000 3.00000 20.0000 30.0000 0.30000 0.99000 0.99000 0.10000
+
+EPI STOI      EP      EN      EC     ESI   ECHLA    EPOM
+EPI1     0.00500 0.08000 0.45000 0.00000 0.65000 0.80000
+
+ZOOP RATE     ZG      ZR      ZM    ZEFF   PREFP  ZOOMIN    ZS2P
+Zoo1     1.50000 0.10000 0.01000 0.50000 0.50000 0.01000 0.30000
+
+ZOOP ALGP  PREFA   PREFA   PREFA   PREFA   PREFA   PREFA   PREFA   PREFA   PREFA
+Zoo1     1.00000 0.50000 0.50000
+
+ZOOP ZOOP  PREFZ   PREFZ   PREFZ   PREFZ   PREFZ   PREFZ   PREFZ   PREFZ   PREFZ
+Zoo1     0.00000
+
+ZOOP TEMP    ZT1     ZT2     ZT3     ZT4     ZK1     ZK2     ZK3     ZK4
+Zoo1     0.00000 15.0000 20.0000 36.0000 0.10000 0.90000 0.98000 0.10000
+
+ZOOP STOI     ZP      ZN      ZC
+Zoo1     0.01500 0.08000 0.45000
+
+MACROPHY  MACWBC  MACWBC  MACWBC  MACWBC  MACWBC  MACWBC  MACWBC  MACWBC  MACWBC
+Mac1         OFF
+
+MAC PRIN  MPRWBC  MPRWBC  MPRWBC  MPRWBC  MPRWBC  MPRWBC  MPRWBC  MPRWBC  MPRWBC
+Mac1         OFF
+
+MAC INI  MACWBCI MACWBCI MACWBCI MACWBCI MACWBCI MACWBCI MACWBCI MACWBCI MACWBCI
+Mac1     0.00000
+
+MAC RATE      MG      MR      MM    MSAT    MHSP    MHSN    MHSC    MPOM  LRPMAC
+Mac1     0.30000 0.05000 0.05000 30.0000 0.00000 0.00000 0.00000 0.90000 0.20000
+
+MAC SED     PSED    NSED
+Mac1     0.50000 0.50000
+
+MAC DIST    MBMP    MMAX
+Mac1     40.0000 500.000
+
+MAC DRAG  CDDRAG     DMV    DWSA   ANORM
+Mac1     3.00000 70000.0 8.00000 0.30000
+
+MAC TEMP     MT1     MT2     MT3     MT4     MK1     MK2     MK3     MK4
+Mac1     7.00000 15.0000 24.0000 34.0000 0.10000 0.99000 0.99000 0.01000
+
+MAC STOICH    MP      MN      MC
+Mac1     0.00500 0.08000 0.45000
+
+DOM       LDOMDK  RDOMDK   LRDDK
+WB 1     0.08000 0.00100 0.00100
+
+POM       LPOMDK  RPOMDK   LRPDK    POMS
+WB 1     0.08000 0.00100 0.00100 0.10000
+
+OM STOIC    ORGP    ORGN    ORGC   ORGSI
+WB 1     0.00500 0.08000 0.45000 0.18000
+
+OM RATE     OMT1    OMT2    OMK1    OMK2
+WB 1     4.00000 30.0000 0.10000 0.99000
+
+CBOD        KBOD    TBOD    RBOD   CBODS
+BOD 1    0.04560 1.01470 1.00000 0.00000
+BOD 2    0.12750 1.01470 1.00000 0.00000
+BOD 3    0.01860 1.01470 1.00000 0.00000
+BOD 4    0.07360 1.01470 1.00000 0.00000
+BOD 5    0.06600 1.01470 1.00000 0.00000
+BOD 6    0.07920 1.01470 1.00000 0.00000
+BOD 7    0.08380 1.01470 1.00000 0.00000
+BOD 8    0.06600 1.01470 1.00000 0.00000
+BOD 9    0.13000 1.01470 1.00000 0.00000
+BOD 10   0.08380 1.01470 1.00000 0.00000
+
+CBOD STOIC  BODP    BODN    BODC
+BOD 1    0.02000 0.08000 0.45000
+BOD 2    0.00200 0.08000 0.45000
+BOD 3    0.00200 0.08000 0.45000
+BOD 4    0.01600 0.08000 0.45000
+BOD 5    0.01100 0.08000 0.45000
+BOD 6    0.00047 0.08000 0.45000
+BOD 7    0.00496 0.08000 0.45000
+BOD 8    0.00041 0.08000 0.45000
+BOD 9    0.00300 0.06000 0.45000
+BOD 10   0.00010 0.06000 0.45000
+
+PHOSPHOR    PO4R   PARTP
+WB 1     0.00100 0.00000
+
+AMMONIUM    NH4R   NH4DK
+WB 1     0.00100 0.40000
+
+NH4 RATE   NH4T1   NH4T2   NH4K1   NH4K2
+WB 1     5.00000 25.0000 0.10000 0.20000
+
+NITRATE    NO3DK    NO3S FNO3SED
+WB 1     0.15000 0.05000 0.37000
+
+NO3 RATE   NO3T1   NO3T2   NO3K1   NO3K2
+WB 1     5.00000 25.0000 0.10000 0.99000
+
+SILICA      DSIR    PSIS   PSIDK  PARTSI
+WB 1     0.10000 0.00000 0.30000 0.20000
+
+IRON         FER     FES
+WB 1     0.10000 0.00000
+
+SED CO2     CO2R
+WB 1     0.10000
+
+STOICH 1   O2NH4    O2OM
+WB 1     4.57000 1.40000
+
+STOICH 2    O2AR    O2AG
+ALG1     1.10000 1.80000
+ALG2     1.10000 1.80000
+ALG3     1.10000 1.80000
+
+STOICH 3    O2ER    O2EG
+EPI1     1.10000 1.80000
+
+STOICH 4    O2ZR
+Zoop1    1.10000
+
+STOICH 5    O2MR    O2MG
+Mac1     1.10000 1.40000
+
+O2 LIMIT   O2LIM
+         0.10000
+
+SEDIMENT    SEDC  SEDPRC   SEDCI    SEDS    SEDK    FSOD    FSED   SEDBR DYNSEDK
+WB 1          ON      ON 0.00000 0.08000 0.10000 1.00000 1.00000 0.00000      ON
+
+SOD RATE   SODT1   SODT2   SODK1   SODK2
+WB 1     4.00000 30.0000 0.10000 0.99000
+
+S DEMAND     SOD     SOD     SOD     SOD     SOD     SOD     SOD     SOD     SOD
+         0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000
+         0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000
+         0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000
+         0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.10000
+         0.10000 0.10000 0.10000 0.10000 0.10000 0.10000 0.00000
+
+REAERATION  TYPE    EQN#   COEF1   COEF2   COEF3   COEF4
+WB 1       RIVER       0 0.00000 0.00000 0.00000 0.00000
+
+RSI FILE..................................RSIFN.................................
+        
+
+QWD FILE..................................QWDFN.................................
+        
+
+QGT FILE..................................QGTFN.................................
+        
+
+WSC FILE..................................WSCFN.................................
+        wsc.csv
+
+SHD FILE..................................SHDFN.................................
+        shade.csv
+
+BTH FILE..................................BTHFN.................................
+WB 1    bath.csv
+
+MET FILE..................................METFN.................................
+WB 1    met_1.csv
+
+EXT FILE..................................EXTFN.................................
+WB 1    ext_wb3.npt - not used
+
+VPR FILE..................................VPRFN.................................
+WB 1    vpr_1.npt
+
+LPR FILE..................................LPRFN.................................
+WB 1    lpr_1.npt
+
+QIN FILE..................................QINFN.................................
+BR1     qin_br1.csv
+
+TIN FILE..................................TINFN.................................
+BR1     tin_br1.csv
+
+CIN FILE..................................CINFN.................................
+BR1     cin_br1.csv
+
+QOT FILE..................................QOTFN.................................
+BR1     qot1.npt
+
+QTR FILE..................................QTRFN.................................
+TR1     qin_18.csv
+TR2     qin_21.csv
+
+TTR FILE..................................TTRFN.................................
+TR1     tin_18.csv
+TR2     qin_21.csv
+
+CTR FILE..................................CTRFN.................................
+TR1     cin_18.csv
+TR2     cin_21.csv
+
+QDT FILE..................................QDTFN.................................
+BR1     qdt_br1.npt
+
+TDT FILE..................................TDTFN.................................
+BR1     tdt_br1.npt
+
+CDT FILE..................................CDTFN.................................
+BR1     cdt8.csv
+
+PRE FILE..................................PREFN.................................
+BR1     pre_br1.npt
+
+TPR FILE..................................TPRFN.................................
+BR1     tpr_br1.npt
+
+CPR FILE..................................CPRFN.................................
+BR1     cpr_br1.npt
+
+EUH FILE..................................EUHFN.................................
+BR1     euh_br1.npt
+
+TUH FILE..................................TUHFN.................................
+BR1     tuh_br1.npt
+
+CUH FILE..................................CUHFN.................................
+BR1     cuh_br1.npt
+
+EDH FILE..................................EDHFN.................................
+BR1     edh_br1.npt
+
+TDH FILE..................................TDHFN.................................
+BR1     tdh_br1.npt
+
+CDH FILE..................................CDHFN.................................
+BR1     cdh_br1.npt
+
+SNP FILE..................................SNPFN.................................
+WB 1    snp_wb1.opt
+
+PRF FILE..................................PRFFN.................................
+WB 1    prf_1.opt
+
+VPL FILE..................................VPLFN.................................
+WB 1    vpl_1.opt
+
+CPL FILE..................................CPLFN.................................
+WB 1    cpl_1.opt
+
+SPR FILE..................................SPRFN.................................
+WB 1    spr_1.opt
+
+FLX FILE..................................FLXFN.................................
+WB 1    flx_1.opt
+
+TSR FILE..................................TSRFN.................................
+        tsr.csv
+
+WDO FILE..................................WDOFN.................................
+        wdo.csv

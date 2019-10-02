@@ -1,0 +1,13 @@
+{
+    "model_run": {        
+        "input_files": [
+            {"name": "cin_18.csv", "col_name": "NH4", "min_val": "0.5", "max_val": "2", "steps": "0.3"}
+        ]
+    },
+    "model_analysis": {
+        "output_file": "tsr_1_seg42.csv",
+        "parameters": [
+            {"name": "NH4", "target": "0.35", "weight": "4", "score_step": "0.1"}
+        ]
+    }
+}

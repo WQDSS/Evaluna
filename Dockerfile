@@ -27,6 +27,7 @@ ENTRYPOINT ["python3",  "src/api.py"]
 
 # copy the model as the default model
 COPY data/mock_stream_A/* /models/default/
+COPY data/yarqon/* /models/yarqon/
 
 # copy the contents of the app
 COPY dss/src/ /app/src/
