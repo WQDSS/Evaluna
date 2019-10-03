@@ -27,9 +27,9 @@ INPUT_EXAMPLE="""
         "type": "quality",
         "output_file": "out.csv",
         "parameters": [
-            { "name":"NO3", "target":"3.7", "weight":"4", "score_step":"0.1", "desired_direction":"-1" },
-            { "name":"NH4", "target":"2.4", "weight":"2", "score_step":"0.2", "desired_direction":"-1" },
-            { "name":"DO", "target":"8", "weight":"2", "score_step":"0.5", "desired_direction":"+1" }
+            { "name":"NO3", "target":"3.7", "weight":"4", "score_step":"0.1" },
+            { "name":"NH4", "target":"2.4", "weight":"2", "score_step":"0.2" },
+            { "name":"DO", "target":"8", "weight":"2", "score_step":"0.5" }
         ]
     }
 }
