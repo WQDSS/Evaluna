@@ -9,7 +9,7 @@ import shutil
 import sys
 import tempfile
 import uuid
-from zipfile import ZipFile
+import zipfile
 
 EXECUTIONS = {}
 MODELS = {}
@@ -88,7 +88,7 @@ class Execution:
 
         # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
         best_run_out_dir = os.path.join(BEST_RUNS_DIR, self.exec_id)
-        os.mkdir(best_run_out_dir)
+        os.makedirs(best_run_out_dir, exist_ok=True)
         best_run_zip_path = os.path.join(best_run_out_dir, 'best_run.zip')
         create_run_zip(best_run[0], params, best_run_zip_path)
         
@@ -147,7 +147,7 @@ def create_run_zip(run_dir, params, run_zip_name):
     input_files = params['model_run']['input_files']    
     out_file = params['model_analysis']['output_file']    
 
-    with ZipFile(run_zip_name, 'w') as run_zip:
+    with zipfile.ZipFile(run_zip_name, 'w') as run_zip:
         for in_file in input_files:
             run_zip.write(os.path.join(run_dir, in_file['name']), in_file['name'])
         
@@ -258,7 +258,7 @@ def add_model(model_name, model_contents):
     if model_name in MODELS:
         raise Exception(f"model {model_name} already exists in DB")
     model_dir = os.path.join(f"/models/{model_name}")
-    model_zip = ZipFile(BytesIO(model_contents))    
+    model_zip = zipfile.ZipFile(BytesIO(model_contents))    
     model_zip.extractall(model_dir)
     MODELS[model_name] = model_dir
 
