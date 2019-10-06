@@ -4,21 +4,26 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>WQ2 Decision Support System</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- 
-        <link rel="stylesheet" type="text/css" media="screen" href="main.css">
-    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">    
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css">
     <script src="static/main.js"></script>
     <script lang="javascript"> 
         document.addEventListener('DOMContentLoaded', function () {
+            const modelFormElement = document.getElementById("form-model-upload")
             const selectElement = document.getElementById("select-model-list")
             const formElement = document.getElementById("form-dss")
             const resultElement = document.getElementById("div-results")
-            setup(selectElement, formElement, resultElement)
+            setup(modelFormElement, selectElement, formElement, resultElement)
         })
     </script>
 </head>
-<body>    
+<body>            
+    <div id="div-model-submit">
+        <form id="form-model-upload">            
+            <p><label for="input-model-file">Model zip File:</label><input id="input-model-file" name="model" type="file"></input></p>
+            <p><button type="submit" id="button-submit-dss">Upload Model</button></p>
+        </form>
+    </div>
     <div id="div-dss-submit">
         <form id="form-dss">
             <p><label for="select-model-list">Model:</label><select id="select-model-list" name="model_name"></select></p>
