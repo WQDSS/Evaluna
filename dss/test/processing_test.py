@@ -63,7 +63,7 @@ async def test_execute_dss():
         
     assert exec_model.call_count == 6 * 3  #  6 values for q_in, 3 values for hangq01
     assert prepare_run_dir.call_count == 6 * 3
-    assert processing.get_result('foo')['score'] == approx(2.175)    
+    assert processing.get_result('foo')['score'] == approx(4.4)    
 
 
 
@@ -130,7 +130,7 @@ async def test_mock_stream():
     dss_result = processing.get_result(exec_id)
     assert dss_result['params']['hangq01.csv'] == 1.0
     assert dss_result['params']['qin_br8.csv'] == 30.0
-    assert dss_result['score'] == approx(-1.336)
+    assert dss_result['score'] == approx(0.8565)
 
 @pytest.mark.asyncio
 async def test_model_or_dir_dont_exist():
