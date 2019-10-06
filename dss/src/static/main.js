@@ -64,6 +64,7 @@ function monitorExecution(executionId, form) {
                 console.log(data)                
                 if (data['status'] === 'COMPLETED') {
                     console.log("Processing is complete")
+                    data['link'] = `best_run/${executionId}`
                 } else {                    
                     setTimeout(monitorThis, 5000)
                 }
@@ -75,6 +76,9 @@ function monitorExecution(executionId, form) {
 
 function dssUpdate(resultElement, e) {
     resultElement.innerHTML += `<pre>${JSON.stringify(e.detail)}</pre>`
+    if (e.detail.link !== undefined) {
+        resultElement.innerHTML += `<a href=${e.detail.link}>best run</a>`
+    }
 }
 
 function uploadModel(modelFormElement) {
