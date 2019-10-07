@@ -1,22 +1,37 @@
-function setup(selectElement, formElement, resultElement) {
-    populateModelsInselect(selectElement)
+function setup(modelFormElement, selectElement, formElement, resultElement) {
+    
     formElement.addEventListener("submit", function (event) {
-        event.preventDefault();
-        executeDss(formElement);
-    });
+        event.preventDefault()
+        executeDss(formElement)
+    })
 
-    // create a closure to wrap updates
+    modelFormElement.addEventListener("submit", function(event) {
+        event.preventDefault()
+        uploadModel(modelFormElement)
+    })
+
+    // create closures to wrap updates
     function updateResults(e) {
         dssUpdate(resultElement, e)
     }
+    
+    function updateModelList(e) {
+        populateModelsInselect(selectElement)
+    }
+
     formElement.addEventListener('dssUpdate', updateResults)
+    modelFormElement.addEventListener('modelUpdate', updateModelList)
+    updateModelList()
+
 }
 
 function populateModelsInselect(selectElement) {    
     fetch('models')
         .then(response => response.json())
         .then((data) => {
-            console.log(data)            
+            console.log(data)
+            selectElement.options.length = 0; // clear any previous options
+
             data["models"].forEach((element, key) => {
                 selectElement[key] = new Option(element, element)
             });
@@ -49,6 +64,7 @@ function monitorExecution(executionId, form) {
                 console.log(data)                
                 if (data['status'] === 'COMPLETED') {
                     console.log("Processing is complete")
+                    data['link'] = `best_run/${executionId}`
                 } else {                    
                     setTimeout(monitorThis, 5000)
                 }
@@ -60,5 +76,19 @@ function monitorExecution(executionId, form) {
 
 function dssUpdate(resultElement, e) {
     resultElement.innerHTML += `<pre>${JSON.stringify(e.detail)}</pre>`
+    if (e.detail.link !== undefined) {
+        resultElement.innerHTML += `<a href=${e.detail.link}>best run</a>`
+    }
+}
 
+function uploadModel(modelFormElement) {
+    var formData = new FormData(modelFormElement)    
+    fetch('add-model', {
+            method: 'POST',
+            body: formData})
+        .then(response => response.json())
+        .then((data) => {
+            console.log(data)
+            modelFormElement.dispatchEvent(new CustomEvent("modelUpdate", { detail: data }))
+        })
 }

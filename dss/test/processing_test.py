@@ -2,7 +2,7 @@ import itertools
 import os
 import shutil
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock, Mock
 import pytest
 from pytest import approx
 from asynctest import CoroutineMock
@@ -57,14 +57,15 @@ async def test_execute_dss():
         return run_dir
 
     with patch('processing.exec_model_async', new=CoroutineMock()) as exec_model:
-        with patch('processing.prepare_run_dir') as prepare_run_dir:            
-            prepare_run_dir.side_effect = create_out_csv
-            await processing.execute_dss(exec_id, params)            
+        with patch('processing.prepare_run_dir') as prepare_run_dir:
+            with patch('processing.create_run_zip') as create_run_zip:
+                prepare_run_dir.side_effect = create_out_csv
+                await processing.execute_dss(exec_id, params)            
         
     assert exec_model.call_count == 6 * 3  #  6 values for q_in, 3 values for hangq01
     assert prepare_run_dir.call_count == 6 * 3
+    assert create_run_zip.call_count == 1 # called once for the best run
     assert processing.get_result('foo')['score'] == approx(4.4)    
-
 
 
 def test_get_run_score():
@@ -148,3 +149,20 @@ async def test_model_or_dir_dont_exist():
         await processing.execute_dss('this-will-fail', test_params)
 
     assert excinfo.value.model_dir == '/test/does-not-exist'
+
+
+def test_create_run_zip():
+
+    test_params = dict(params)
+    run_dir = '/foo/bar'
+    run_zip_name = 'myfoo.zip'
+
+    # The ZipFile object is used as a context manager, so mock the __enter__ call  
+    context_mock = Mock()
+    zipfile_obj = MagicMock(__enter__=Mock(return_value=context_mock))
+    with patch('zipfile.ZipFile', return_value=zipfile_obj) as zip_file:
+                       
+        processing.create_run_zip(run_dir, test_params, run_zip_name)
+        zip_file.assert_called_once_with(run_zip_name, 'w')
+        assert zipfile_obj is zip_file.return_value
+        assert context_mock.write.call_count == len(test_params['model_run']['input_files']) + 1  #  One additional write for output file

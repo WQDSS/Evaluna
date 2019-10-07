@@ -9,13 +9,14 @@ import shutil
 import sys
 import tempfile
 import uuid
-from zipfile import ZipFile
+import zipfile
 
 EXECUTIONS = {}
 MODELS = {}
 
 MODEL_EXE = os.environ.get("WQDSS_MODEL_EXE", "/dss-bin/w2_exe_linux_par")
 BASE_MODEL_DIR = os.environ.get("WQDSS_BASE_MODEL_DIR", "/models")
+BEST_RUNS_DIR = os.environ.get("WQDSS_BASE_MODEL_DIR", "/best_runs")
 DEFAULT_MODEL = "default"
 
 logger = logging.getLogger()
@@ -84,6 +85,13 @@ class Execution:
         
         run_scores = [(run_dir, p, get_run_score(run_dir, params)) for (run_dir, p) in self.runs]        
         best_run = min(run_scores, key= lambda x: x[2])
+
+        # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
+        best_run_out_dir = os.path.join(BEST_RUNS_DIR, self.exec_id)
+        os.makedirs(best_run_out_dir, exist_ok=True)
+        best_run_zip_path = os.path.join(best_run_out_dir, 'best_run.zip')
+        create_run_zip(best_run[0], params, best_run_zip_path)
+
         return {'best_run': best_run[0], 'params': best_run[1], 'score': best_run[2]}
 
 async def execute_run_async(execution, params, run_permutation):
@@ -135,6 +143,15 @@ def update_inputs_for_run(run_dir, params, input_values):
                 row[out_param] = input_values[i['name']]
                 writer.writerow(row)
 
+def create_run_zip(run_dir, params, run_zip_name):
+    input_files = params['model_run']['input_files']    
+    out_file = params['model_analysis']['output_file']    
+
+    with zipfile.ZipFile(run_zip_name, 'w') as run_zip:
+        for in_file in input_files:
+            run_zip.write(os.path.join(run_dir, in_file['name']), in_file['name'])
+        
+        run_zip.write(os.path.join(run_dir, out_file), out_file)    
 
 def prepare_run_dir(exec_id, params, param_values):
     '''
@@ -213,6 +230,11 @@ def get_status(exec_id):
 def get_result(exec_id):
     return EXECUTIONS[exec_id].result
 
+def get_best_run(exec_id):
+    """ Returns a zip file containing the outputs of the best run for the execution. """
+    best_run_out_dir = os.path.join(BEST_RUNS_DIR, exec_id, 'best_run.zip')
+    return open(best_run_out_dir, 'rb').read()
+
 
 async def execute_dss(exec_id, params):
     #TODO: extract handling the Execution to a context
@@ -228,7 +250,7 @@ def add_model(model_name, model_contents):
     if model_name in MODELS:
         raise Exception(f"model {model_name} already exists in DB")
     model_dir = os.path.join(f"/models/{model_name}")
-    model_zip = ZipFile(BytesIO(model_contents))    
+    model_zip = zipfile.ZipFile(BytesIO(model_contents))    
     model_zip.extractall(model_dir)
     MODELS[model_name] = model_dir
 

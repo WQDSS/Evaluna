@@ -30,6 +30,22 @@ async def status(req, resp, * , exec_id):
         resp.media["result"] = result
         logging.info(result)
 
+@api.route("/best_run/{exec_id}")
+async def run_zip(req, resp, *, exec_id):
+    try:
+        status = processing.get_status(exec_id)
+        if status != "COMPLETED":
+            raise KeyError
+        
+        resp.content = processing.get_best_run(exec_id)
+        resp.mimetype = "application/zip"  
+    except KeyError:
+        resp.status_code = 400
+        resp.media = {'exec_id': exec_id}        
+    
+  
+
+
 @api.route("/dss")
 async def exec_dss(req, resp):
     """
