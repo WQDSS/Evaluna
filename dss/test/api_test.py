@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import io
 import json
 import threading
 import unittest.mock as mock
@@ -82,6 +83,39 @@ def test_dss_execution(api, tmp_path):
     assert resp['status'] == processing.ExectuionState.COMPLETED.value
     assert resp['result'] == RESPONSE
 
+    # check that the best run output is reachable
+    s = io.BytesIO()
+    with zipfile.ZipFile(s, 'w') as zf:
+        pass
+    empty_zip_contents = s.getvalue()
+    with mock.patch('processing.get_best_run', return_value=empty_zip_contents):
+        resp = api.requests.get(f"/best_run/{exec_id}")
+        assert resp.status_code == 200
+        assert resp.content == empty_zip_contents
+        assert resp.headers['content-type'] == 'application/zip'
+
+def test_get_best_run_not_found(api):    
+    s = io.BytesIO()
+    with zipfile.ZipFile(s, 'w'):
+        pass
+
+    empty_zip_contents = s.getvalue()
+    with mock.patch('processing.get_best_run', return_value=empty_zip_contents):
+        resp = api.requests.get(f"/best_run/foobar")
+        assert resp.status_code == 400
+        assert resp.json() == {"exec_id": "foobar"}
+
+def test_get_best_run_in_progress(api):    
+    s = io.BytesIO()
+    with zipfile.ZipFile(s, 'w'):
+        pass
+
+    empty_zip_contents = s.getvalue()
+    with mock.patch('processing.get_best_run', return_value=empty_zip_contents):
+        with mock.patch('processing.get_status', return_value='IN_PROGRESS'):
+            resp = api.requests.get(f"/best_run/foobar")
+            assert resp.status_code == 400
+            assert resp.json() == {"exec_id": "foobar"}
 
 def test_add_model(api, tmp_path):
     file_a = tmp_path / "file.a"
