@@ -219,7 +219,7 @@ def get_run_score(run_dir, params):
         param_value = get_run_parameter_value(param['name'], contents)
         param_scores[param['name']] = calc_param_score(param_value, float(param['target']), float(param['score_step']), float(param['weight']))
 
-        return sum(param_scores.values())
+    return sum(param_scores.values())
         
 def get_exec_id():
     return str(uuid.uuid4())
