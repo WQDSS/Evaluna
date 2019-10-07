@@ -179,10 +179,10 @@ def get_run_parameter_value(param_name, contents):
     return float(next(reader)[param_name])
 
 
-def calc_param_score(value, target, score_step):
+def calc_param_score(value, target, score_step, weight):
     
     distance = abs(target - value)
-    return distance/score_step
+    return (distance/score_step)/weight
 
 def get_out_file_contents(run_dir, out_file):
     with open(os.path.join(run_dir, out_file), 'r') as ifile:
@@ -200,13 +200,9 @@ def get_run_score(run_dir, params):
     param_scores = {}
     for param in model_analysis_params:
         param_value = get_run_parameter_value(param['name'], contents)
-        param_score = calc_param_score(param_value, float(param['target']), float(param['score_step']))
-        param_scores[param['name']] = (param_score, float(param['weight']))
+        param_scores[param['name']] = calc_param_score(param_value, float(param['target']), float(param['score_step']), float(param['weight']))
 
-    weights = [s[1] for s in param_scores.values()]
-    weighted_scores = [s[0] / s[1] for s in param_scores.values()]
-    
-    return sum(weighted_scores)
+        return sum(param_scores.values())
         
 def get_exec_id():
     return str(uuid.uuid4())
