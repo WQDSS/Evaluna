@@ -84,14 +84,14 @@ class Execution:
             logger.info(f'finished slice {i}: {s}')
         
         run_scores = [(run_dir, p, get_run_score(run_dir, params)) for (run_dir, p) in self.runs]        
-        best_run = max(run_scores, key= lambda x: x[2])
+        best_run = min(run_scores, key= lambda x: x[2])
 
         # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
         best_run_out_dir = os.path.join(BEST_RUNS_DIR, self.exec_id)
         os.makedirs(best_run_out_dir, exist_ok=True)
         best_run_zip_path = os.path.join(best_run_out_dir, 'best_run.zip')
         create_run_zip(best_run[0], params, best_run_zip_path)
-        
+
         return {'best_run': best_run[0], 'params': best_run[1], 'score': best_run[2]}
 
 async def execute_run_async(execution, params, run_permutation):
@@ -196,14 +196,10 @@ def get_run_parameter_value(param_name, contents):
     return float(next(reader)[param_name])
 
 
-def calc_param_score(value, target, score_step, desired_direction):
+def calc_param_score(value, target, score_step, weight):
     
-    if desired_direction > 0:
-        distance = value - target
-    else:
-        distance = target - value
-
-    return distance/score_step
+    distance = abs(target - value)
+    return (distance/score_step)/weight
 
 def get_out_file_contents(run_dir, out_file):
     with open(os.path.join(run_dir, out_file), 'r') as ifile:
@@ -221,13 +217,9 @@ def get_run_score(run_dir, params):
     param_scores = {}
     for param in model_analysis_params:
         param_value = get_run_parameter_value(param['name'], contents)
-        param_score = calc_param_score(param_value, float(param['target']), float(param['score_step']), int(param['desired_direction']))
-        param_scores[param['name']] = (param_score, float(param['weight']))
+        param_scores[param['name']] = calc_param_score(param_value, float(param['target']), float(param['score_step']), float(param['weight']))
 
-    weights = [s[1] for s in param_scores.values()]
-    weighted_scores = [s[0] * s[1] for s in param_scores.values()]
-    
-    return sum(weighted_scores)/sum(weights)
+    return sum(param_scores.values())
         
 def get_exec_id():
     return str(uuid.uuid4())

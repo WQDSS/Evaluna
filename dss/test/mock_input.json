@@ -1,13 +1,11 @@
 {
     "model_run": {        
-        "type": "flow",
         "input_files": [
             {"name": "hangq01.csv", "col_name": "Q", "min_val": "1", "max_val": "2", "steps": "0.5"},
             {"name": "qin_br8.csv", "col_name": "QWD", "min_val": "30", "max_val": "34", "steps": "2"}
         ]
     },
     "model_analysis": {
-        "type": "quality",
         "output_file": "tsr_2_seg7.csv",
         "parameters": [
             {"name": "TN", "target": "0.6", "weight": "4", "score_step": "0.1", "desired_direction": "-1"},

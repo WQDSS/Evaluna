@@ -12,9 +12,9 @@ import processing
 params = {
     'model_analysis' : {
         'parameters' : [
-            {'name': 'NO3', 'target':'3.7', 'weight':'4', 'score_step':'0.1', 'desired_direction':'-1'},
-            {'name': 'NH4', 'target':'2.4', 'weight':'2', 'score_step':'0.2', 'desired_direction':'-1'},
-            {'name': 'DO', 'target':'8.0', 'weight':'2', 'score_step':'0.5', 'desired_direction':'+1'},
+            {'name': 'NO3', 'target':'3.7', 'weight':'4', 'score_step':'0.1' },
+            {'name': 'NH4', 'target':'2.4', 'weight':'2', 'score_step':'0.2' },
+            {'name': 'DO', 'target':'8.0', 'weight':'2', 'score_step':'0.5'},
         ],
         "output_file": "tsr_2_seg7.csv",
     },
@@ -65,8 +65,7 @@ async def test_execute_dss():
     assert exec_model.call_count == 6 * 3  #  6 values for q_in, 3 values for hangq01
     assert prepare_run_dir.call_count == 6 * 3
     assert create_run_zip.call_count == 1 # called once for the best run
-    assert processing.get_result('foo')['score'] == approx(2.175)    
-
+    assert processing.get_result('foo')['score'] == approx(4.4)    
 
 
 def test_get_run_score():
@@ -80,22 +79,22 @@ def test_get_run_score():
         # test where one value exceeds target (wrong direction)
         with patch('processing.get_run_parameter_value', side_effect=[3.7, 2.4, 7.0]):
             result = processing.get_run_score(RUN_DIR, params)
-            assert result == approx(-0.5)  #  ((7.0 - 8.0)/0.5) * (2.0/8.0))
+            assert result == approx(1.0)  #  (|(7.0 - 8.0)/0.5)| / 2.0)
 
         # test where two values exceed target (wrong direction)
         with patch('processing.get_run_parameter_value', side_effect=[3.8, 2.4, 7.0]):
             result = processing.get_run_score(RUN_DIR, params)
-            assert result == approx(-1.0)  #  ((3.7 - 3.8)/0.1)*(4.0/8.0)  + ((7.0 - 8.0)/0.5) * (2.0/(8.0))
+            assert result == approx(1.25)  #  (|(3.7 - 3.8)/0.1|) / 4.0) + (|(7.0 - 8.0)/0.5)| / 2.0)
 
         # test where two values exceed target (one in wrong direction, one in right direction)
         with patch('processing.get_run_parameter_value', side_effect=[3.6, 2.4, 7.0]):
             result = processing.get_run_score(RUN_DIR, params)
-            assert result == approx(0)  #  ((3.7 - 3.6)/0.1)*(4.0/8.0)  + ((7.0 - 8.0)/0.5) * (2.0/(8.0))
+            assert result == approx(1.25)  #  (|(3.7 - 3.6)/0.1|) / 4.0) + (|(7.0 - 8.0)/0.5)| / 2.0)
 
         # test where two values exceed target (both in right direction)
         with patch('processing.get_run_parameter_value', side_effect=[3.6, 2.4, 9.0]):
             result = processing.get_run_score(RUN_DIR, params)
-            assert result == approx(1.0)  #  ((3.7 - 3.6)/0.1)*(4.0/8.0)  + ((9.0 - 8.0)/0.5) * (2.0/(8.0))
+            assert result == approx(1.25)  #  (|(3.7 - 3.6)/0.1|) / 4.0) + (|(9.0 - 8.0)/0.5)| / 2.0)
 
 def test_generate_permutations():
     result = processing.generate_permutations(params)
@@ -120,8 +119,8 @@ async def test_mock_stream():
             "type": "quality",
             "output_file": "tsr_2_seg7.csv",
             "parameters": [
-                {"name": "TN", "target": "0.6", "weight": "4", "score_step": "0.1", "desired_direction": "-1"},
-                {"name": "DO", "target": "11", "weight": "2", "score_step": "0.5", "desired_direction": "+1"}
+                {"name": "TN", "target": "0.6", "weight": "4", "score_step": "0.1" },
+                {"name": "DO", "target": "11", "weight": "2", "score_step": "0.5" }
             ]
         }
     }
@@ -132,7 +131,7 @@ async def test_mock_stream():
     dss_result = processing.get_result(exec_id)
     assert dss_result['params']['hangq01.csv'] == 1.0
     assert dss_result['params']['qin_br8.csv'] == 30.0
-    assert dss_result['score'] == approx(-1.336)
+    assert dss_result['score'] == approx(0.8565)
 
 @pytest.mark.asyncio
 async def test_model_or_dir_dont_exist():
