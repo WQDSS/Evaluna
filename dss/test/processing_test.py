@@ -42,28 +42,32 @@ async def test_execute_dss():
 
     run_dirs = get_run_dir()
 
-    def create_out_csv(exec_id, params, param_values):
-        '''
-        Create a dummy csv file for tests
-        '''
-        run_dir = next(run_dirs)
-        try:
-            os.makedirs(run_dir)
-        except:
-            pass
+    def create_prepare_run_dir_side_effect(params):
 
-        with open(os.path.join(run_dir, params['model_analysis']['output_file']), 'w') as f:
-            f.write('NO3,NH4,DO,\n')
-            no3_val = 3.0 + (0.1 * param_values['hangq01.csv'])
-            do_val = 4.8 + (0.02 * param_values['qin_br8.csv'])
-            f.write(f'{no3_val},2.1,{do_val},\n')
+        def create_out_csv(exec_id, param_values, model_name):
+            '''
+            Create a dummy csv file for tests
+            '''
+            run_dir = next(run_dirs)
+            try:
+                os.makedirs(run_dir)
+            except:
+                pass
 
-        return run_dir
+            with open(os.path.join(run_dir, params['model_analysis']['output_file']), 'w') as f:
+                f.write('NO3,NH4,DO,\n')
+                no3_val = 3.0 + (0.1 * param_values.values['hangq01.csv'])
+                do_val = 4.8 + (0.02 * param_values.values['qin_br8.csv'])
+                f.write(f'{no3_val},2.1,{do_val},\n')
+
+            return run_dir
+
+        return create_out_csv
 
     with patch('processing.exec_model_async', new=CoroutineMock()) as exec_model:
         with patch('processing.prepare_run_dir') as prepare_run_dir:
             with patch('processing.create_run_zip') as create_run_zip:
-                prepare_run_dir.side_effect = create_out_csv
+                prepare_run_dir.side_effect = create_prepare_run_dir_side_effect(params)
                 await processing.execute_dss(exec_id, params)
 
     assert exec_model.call_count == 6 * 3  # 6 values for q_in, 3 values for hangq01
@@ -138,7 +142,10 @@ async def test_mock_stream():
     }
     shutil.copy(os.path.join(processing.BASE_MODEL_DIR,
                              processing.MODEL_EXE), mock_stream_dir)
-    processing.MODELS["default"] = mock_stream_dir
+    shutil.make_archive('default', 'zip', mock_stream_dir)
+    with open("default.zip", "rb") as f:
+        processing.add_model("default", f.read())
+
     await processing.execute_dss(exec_id, test_params)
     dss_result = processing.get_result(exec_id)
     assert dss_result['params']['hangq01.csv'] == 1.0
@@ -160,7 +167,7 @@ async def test_model_or_dir_dont_exist():
     with pytest.raises(processing.ModelDirNotFoundError) as excinfo:
         await processing.execute_dss('this-will-fail', test_params)
 
-    assert excinfo.value.model_dir == '/test/does-not-exist'
+    assert excinfo.value.model_dir == 'somemodel'
 
 
 def test_create_run_zip():

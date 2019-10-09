@@ -15,7 +15,7 @@ import processing
 
 logging.basicConfig(level=logging.DEBUG)
 
-INPUT_EXAMPLE="""
+INPUT_EXAMPLE = """
 {
     "model_run": {
         "type": "flow",
@@ -36,39 +36,41 @@ INPUT_EXAMPLE="""
 }
 """
 
+
 @pytest.fixture
 def api():
     return service.api
 
+
 def test_execution_not_found(api):
     assert api.requests.get(f"/status/DOES_NOT_EXIST").json()['status'] == 'NOT_FOUND'
+
 
 def test_dss_execution(api, tmp_path):
     '''
     Test the execution of a dss, including setting the paramters, and polling for a result
-    '''    
-    RESPONSE={"score" : 4.2}    
+    '''
+    RESPONSE = {"score": 4.2}
 
     file_obj = tmp_path / "data.t"
-    file_obj.write_bytes(INPUT_EXAMPLE.encode())    
-    
+    file_obj.write_bytes(INPUT_EXAMPLE.encode())
+
     files = {'input': (file_obj.name, file_obj.read_bytes(), 'application/json')}
     data = {'model_name': 'some_model'}
-       
+
     start_event = asyncio.Event()
 
-    async def my_execute(params):        
+    async def my_execute(params):
         await start_event.wait()
         expected_params = json.loads(INPUT_EXAMPLE)
         expected_params['model_run']['model_name'] = 'some_model'
         assert params == expected_params
         return RESPONSE
 
-
-    with api.requests:            
+    with api.requests:
         with mock.patch.object(processing.Execution, 'execute', new=CoroutineMock(side_effect=my_execute)) as execute:
-            resp = api.requests.post("/dss", data=data, files=files)                 
-        
+            resp = api.requests.post("/dss", data=data, files=files)
+
     model_response = resp.json()
     assert 'id' in model_response
     exec_id = model_response['id']
@@ -77,9 +79,9 @@ def test_dss_execution(api, tmp_path):
     assert api.requests.get(f"/status/{exec_id}").json()['status'] == processing.ExectuionState.RUNNING.value
 
     # the model can now execute
-    start_event.set()    
-    
-    resp = api.requests.get(f"/status/{exec_id}").json()                
+    start_event.set()
+
+    resp = api.requests.get(f"/status/{exec_id}").json()
     assert resp['status'] == processing.ExectuionState.COMPLETED.value
     assert resp['result'] == RESPONSE
 
@@ -94,7 +96,8 @@ def test_dss_execution(api, tmp_path):
         assert resp.content == empty_zip_contents
         assert resp.headers['content-type'] == 'application/zip'
 
-def test_get_best_run_not_found(api):    
+
+def test_get_best_run_not_found(api):
     s = io.BytesIO()
     with zipfile.ZipFile(s, 'w'):
         pass
@@ -105,7 +108,8 @@ def test_get_best_run_not_found(api):
         assert resp.status_code == 400
         assert resp.json() == {"exec_id": "foobar"}
 
-def test_get_best_run_in_progress(api):    
+
+def test_get_best_run_in_progress(api):
     s = io.BytesIO()
     with zipfile.ZipFile(s, 'w'):
         pass
@@ -117,27 +121,26 @@ def test_get_best_run_in_progress(api):
             assert resp.status_code == 400
             assert resp.json() == {"exec_id": "foobar"}
 
+
 def test_add_model(api, tmp_path):
     file_a = tmp_path / "file.a"
     file_a.write_bytes("this is a file".encode())
 
     file_b = tmp_path / "file.b"
     file_b.write_bytes("this is b file".encode())
-    
+
     model_zip = tmp_path / "model.zip"
 
     with zipfile.ZipFile(model_zip, 'w') as z:
         z.write(file_a)
         z.write(file_b)
-        
-    files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}    
+
+    files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}
     resp = api.requests.post("/add-model", files=files)
-    
+
     model_added_resp = resp.json()
     assert 'model_name' in model_added_resp
     assert model_added_resp['model_name'] == 'test_model'
     list_models_resp = api.requests.get('/models')
     models_list = list_models_resp.json()
     assert 'test_model' in models_list['models']
-
-

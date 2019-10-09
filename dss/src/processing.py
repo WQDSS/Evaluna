@@ -51,6 +51,9 @@ def load_models():
     models = next(os.walk(BASE_MODEL_DIR))[1]
     for model in models:
         MODELS[model] = os.path.join(BASE_MODEL_DIR, model)
+        if not os.path.exists(f"{MODELS[model]}.zip"):
+            # if the zip archive doesn't exist - create it
+            shutil.make_archive(MODELS[model], "zip", MODELS[model])
 
 
 class Execution:
@@ -183,7 +186,17 @@ def create_run_zip(run_dir, params, run_zip_name):
         run_zip.write(os.path.join(run_dir, out_file), out_file)
 
 
-def prepare_run_dir(exec_id, param_values, model_name=DEFAULT_MODEL):
+def get_model_by_name(model_name):
+    try:
+        # model_dir = MODELS[model_name]
+        model_zip = f"{MODELS[model_name]}.zip"
+        with open(model_zip, "rb") as model_contents:
+            return model_contents.read()
+    except KeyError:
+        raise ModelNotFoundError(model_name)
+
+
+def prepare_run_dir(exec_id, param_values, model_name):
     '''
     Populates a temporary directory with the model files,
     along with inputs provided by the user
@@ -191,16 +204,14 @@ def prepare_run_dir(exec_id, param_values, model_name=DEFAULT_MODEL):
 
     run_dir = tempfile.mkdtemp(prefix=f'wqdss-exec-{exec_id}')
     os.rmdir(run_dir)
-    try:
-        model_dir = MODELS[model_name]
-    except KeyError:
-        raise ModelNotFoundError(model_name)
 
     try:
-        shutil.copytree(model_dir, run_dir)
+        model_contents = get_model_by_name(model_name)
+        model_zip = zipfile.ZipFile(BytesIO(model_contents))
+        model_zip.extractall(run_dir)
         update_inputs_for_run(run_dir, param_values)
     except FileNotFoundError:
-        raise ModelDirNotFoundError(model_dir)
+        raise ModelDirNotFoundError(model_name)
 
     return run_dir
 
@@ -284,10 +295,14 @@ async def execute_dss(exec_id, params):
 def add_model(model_name, model_contents):
     if model_name in MODELS:
         raise Exception(f"model {model_name} already exists in DB")
-    model_dir = os.path.join(f"/models/{model_name}")
+
+    model_dir = os.path.join(BASE_MODEL_DIR, model_name)
     model_zip = zipfile.ZipFile(BytesIO(model_contents))
     model_zip.extractall(model_dir)
     MODELS[model_name] = model_dir
+
+    with open(os.path.join(BASE_MODEL_DIR, f"{model_name}.zip"), "wb") as model_file:
+        model_file.write(model_contents)
 
 
 def get_models():
