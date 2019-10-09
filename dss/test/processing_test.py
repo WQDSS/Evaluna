@@ -64,10 +64,15 @@ async def test_execute_dss():
 
         return create_out_csv
 
-    with patch('processing.exec_model_async', new=CoroutineMock()) as exec_model:
+    def exec_model_side_effect(run_dir, output_file):
+        with open(os.path.join(run_dir, output_file), 'r') as f:
+            return f.readlines()
+
+    with patch('processing.exec_model_async', new=CoroutineMock(side_effect=exec_model_side_effect)) as exec_model:
+        exec_model.side_effect = exec_model_side_effect
         with patch('processing.prepare_run_dir') as prepare_run_dir:
+            prepare_run_dir.side_effect = create_prepare_run_dir_side_effect(params)
             with patch('processing.create_run_zip') as create_run_zip:
-                prepare_run_dir.side_effect = create_prepare_run_dir_side_effect(params)
                 await processing.execute_dss(exec_id, params)
 
     assert exec_model.call_count == 6 * 3  # 6 values for q_in, 3 values for hangq01
@@ -78,34 +83,33 @@ async def test_execute_dss():
 
 def test_get_run_score():
     RUN_DIR = 'foo'
-    with patch('processing.get_out_file_contents'):
-        # test where all values are at their targets
-        with patch('processing.get_run_parameter_value', side_effect=[3.7, 2.4, 8.0]):
-            result = processing.get_run_score(RUN_DIR, params)
-            assert result == 0
+    # test where all values are at their targets
+    with patch('processing.get_run_parameter_value', side_effect=[3.7, 2.4, 8.0]):
+        result = processing.get_run_score(RUN_DIR, params, "")
+        assert result == 0
 
-        # test where one value exceeds target (wrong direction)
-        with patch('processing.get_run_parameter_value', side_effect=[3.7, 2.4, 7.0]):
-            result = processing.get_run_score(RUN_DIR, params)
-            assert result == approx(1.0)  # (|(7.0 - 8.0)/0.5)| / 2.0)
+    # test where one value exceeds target (wrong direction)
+    with patch('processing.get_run_parameter_value', side_effect=[3.7, 2.4, 7.0]):
+        result = processing.get_run_score(RUN_DIR, params, "")
+        assert result == approx(1.0)  # (|(7.0 - 8.0)/0.5)| / 2.0)
 
-        # test where two values exceed target (wrong direction)
-        with patch('processing.get_run_parameter_value', side_effect=[3.8, 2.4, 7.0]):
-            result = processing.get_run_score(RUN_DIR, params)
-            # (|(3.7 - 3.8)/0.1|) / 4.0) + (|(7.0 - 8.0)/0.5)| / 2.0)
-            assert result == approx(1.25)
+    # test where two values exceed target (wrong direction)
+    with patch('processing.get_run_parameter_value', side_effect=[3.8, 2.4, 7.0]):
+        result = processing.get_run_score(RUN_DIR, params, "")
+        # (|(3.7 - 3.8)/0.1|) / 4.0) + (|(7.0 - 8.0)/0.5)| / 2.0)
+        assert result == approx(1.25)
 
-        # test where two values exceed target (one in wrong direction, one in right direction)
-        with patch('processing.get_run_parameter_value', side_effect=[3.6, 2.4, 7.0]):
-            result = processing.get_run_score(RUN_DIR, params)
-            # (|(3.7 - 3.6)/0.1|) / 4.0) + (|(7.0 - 8.0)/0.5)| / 2.0)
-            assert result == approx(1.25)
+    # test where two values exceed target (one in wrong direction, one in right direction)
+    with patch('processing.get_run_parameter_value', side_effect=[3.6, 2.4, 7.0]):
+        result = processing.get_run_score(RUN_DIR, params, "")
+        # (|(3.7 - 3.6)/0.1|) / 4.0) + (|(7.0 - 8.0)/0.5)| / 2.0)
+        assert result == approx(1.25)
 
-        # test where two values exceed target (both in right direction)
-        with patch('processing.get_run_parameter_value', side_effect=[3.6, 2.4, 9.0]):
-            result = processing.get_run_score(RUN_DIR, params)
-            # (|(3.7 - 3.6)/0.1|) / 4.0) + (|(9.0 - 8.0)/0.5)| / 2.0)
-            assert result == approx(1.25)
+    # test where two values exceed target (both in right direction)
+    with patch('processing.get_run_parameter_value', side_effect=[3.6, 2.4, 9.0]):
+        result = processing.get_run_score(RUN_DIR, params, "")
+        # (|(3.7 - 3.6)/0.1|) / 4.0) + (|(9.0 - 8.0)/0.5)| / 2.0)
+        assert result == approx(1.25)
 
 
 def test_generate_permutations():

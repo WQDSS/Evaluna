@@ -67,6 +67,11 @@ class Execution:
     def add_run(self, run_dir, p):
         self.runs.append((run_dir, p))
 
+    def set_run_output(self, run_dir, output):
+        run = next(filter(lambda r: r[0] == run_dir, self.runs))
+        run_index = self.runs.index(run)
+        self.runs[run_index] = tuple(list(run) + [output])
+
     def clean(self):
         for (run_dir, _) in self.runs:
             shutil.rmtree(run_dir)
@@ -90,8 +95,8 @@ class Execution:
             await asyncio.gather(*awaitables)
             logger.info(f'finished slice {i}: {s}')
 
-        run_scores = [(run_dir, p.values, get_run_score(run_dir, params))
-                      for (run_dir, p) in self.runs]
+        run_scores = [(run_dir, p.values, get_run_score(run_dir, params, outfile_contents))
+                      for (run_dir, p, outfile_contents) in self.runs]
         best_run = min(run_scores, key=lambda x: x[2])
 
         # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
@@ -107,7 +112,8 @@ async def execute_run_async(execution, params, run_permutation):
     model_name = params['model_run']['model_name'] if 'model_name' in params['model_run'] else DEFAULT_MODEL
     run_dir = prepare_run_dir(execution.exec_id, run_permutation, model_name)
     execution.add_run(run_dir, run_permutation)
-    await exec_model_async(run_dir, params)
+    out_file_contents = await exec_model_async(run_dir, params['model_analysis']['output_file'])
+    execution.set_run_output(run_dir, out_file_contents)
 
 
 class ModelExecutionPermutation:
@@ -216,13 +222,14 @@ def prepare_run_dir(exec_id, param_values, model_name):
     return run_dir
 
 
-async def exec_model_async(run_dir, params):
+async def exec_model_async(run_dir, output_file):
     process = await asyncio.create_subprocess_exec(
         MODEL_EXE, run_dir,
         stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
     logger.debug(f'going to execute process {process}')
     await process.wait()
     logger.debug(f'Finished executing {process}')
+    return get_out_file_contents(run_dir, output_file)
 
 
 def get_run_parameter_value(param_name, contents):
@@ -248,16 +255,14 @@ def get_out_file_contents(run_dir, out_file):
     return contents
 
 
-def get_run_score(run_dir, params):
+def get_run_score(run_dir, params, outfile_contents):
     """
     Based on the params field 'model_analysis' find the run for this score
     """
     model_analysis_params = params['model_analysis']['parameters']
-    out_file = params['model_analysis']['output_file']
-    contents = get_out_file_contents(run_dir, out_file)
     param_scores = {}
     for param in model_analysis_params:
-        param_value = get_run_parameter_value(param['name'], contents)
+        param_value = get_run_parameter_value(param['name'], outfile_contents)
         param_scores[param['name']] = calc_param_score(param_value, float(
             param['target']), float(param['score_step']), float(param['weight']))
 
