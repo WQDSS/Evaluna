@@ -3,8 +3,10 @@ import json
 import os
 
 import responder
-import processing
 import logging
+
+import model_registry
+import processing
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -15,7 +17,7 @@ api = responder.API()
 
 @api.on_event('startup')
 async def load_models():
-    processing.load_models()
+    model_registry.load_models()
 
 
 @api.route("/status/{exec_id}")
@@ -78,7 +80,7 @@ async def add_model(req, resp):
     files = await req.media('files')
     model_contents = files['model']['content']
     model_name = files['model']['filename']
-    processing.add_model(model_name, model_contents)
+    model_registry.add_model(model_name, model_contents)
     logger.info("Added model %s", model_name)
     resp.media = {"model_name": model_name}
 
@@ -88,7 +90,7 @@ async def models(req, resp):
     '''
     Return all models currently registered
     '''
-    resp.media = {"models": list(processing.get_models())}
+    resp.media = {"models": list(model_registry.get_models())}
     logging.info('returned model list')
 
 

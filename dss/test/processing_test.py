@@ -9,6 +9,7 @@ from asynctest import CoroutineMock
 
 import processing
 import model_execution
+import model_registry
 
 params = {
     'model_analysis': {
@@ -145,11 +146,11 @@ async def test_mock_stream():
             ]
         }
     }
-    shutil.copy(os.path.join(processing.BASE_MODEL_DIR,
+    shutil.copy(os.path.join(model_registry.BASE_MODEL_DIR,
                              model_execution.MODEL_EXE), mock_stream_dir)
     shutil.make_archive('default', 'zip', mock_stream_dir)
     with open("default.zip", "rb") as f:
-        processing.add_model("default", f.read())
+        model_registry.add_model("default", f.read())
 
     await processing.execute_dss(exec_id, test_params)
     dss_result = processing.get_result(exec_id)
@@ -164,11 +165,11 @@ async def test_model_or_dir_dont_exist():
     test_params = dict(params)
     test_params['model_run']['model_name'] = 'somemodel'
 
-    with pytest.raises(processing.ModelNotFoundError) as excinfo:
+    with pytest.raises(model_registry.ModelNotFoundError) as excinfo:
         await processing.execute_dss('no-such-model', test_params)
     assert excinfo.value.model_name == 'somemodel'
 
-    processing.MODELS['somemodel'] = '/test/does-not-exist'
+    model_registry.MODELS['somemodel'] = '/test/does-not-exist'
     with pytest.raises(model_execution.ModelDirNotFoundError) as excinfo:
         await processing.execute_dss('this-will-fail', test_params)
 

@@ -6,7 +6,7 @@ import os
 import tempfile
 import zipfile
 
-import processing
+import model_registry
 
 MODEL_EXE = os.environ.get("WQDSS_MODEL_EXE", "/dss-bin/w2_exe_linux_par")
 
@@ -30,7 +30,7 @@ def prepare_run_dir(exec_id, param_values, model_name):
     os.rmdir(run_dir)
 
     try:
-        model_contents = processing.get_model_by_name(model_name)
+        model_contents = model_registry.get_model_by_name(model_name)
         model_zip = zipfile.ZipFile(BytesIO(model_contents))
         model_zip.extractall(run_dir)
         update_inputs_for_run(run_dir, param_values)

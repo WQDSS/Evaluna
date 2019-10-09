@@ -1,5 +1,4 @@
 import asyncio
-from io import BytesIO
 import csv
 from enum import Enum
 import itertools
@@ -9,14 +8,14 @@ import shutil
 import uuid
 import zipfile
 
+
 import model_execution
+import model_registry
 
 EXECUTIONS = {}
-MODELS = {}
 
-BASE_MODEL_DIR = os.environ.get("WQDSS_BASE_MODEL_DIR", "/models")
+
 BEST_RUNS_DIR = os.environ.get("WQDSS_BEST_RUNS_DIR", "/best_runs")
-DEFAULT_MODEL = "default"
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -29,25 +28,6 @@ def sliced(seq, n):
 class ExectuionState(Enum):
     RUNNING = 'RUNNING'
     COMPLETED = 'COMPLETED'
-
-
-class ModelNotFoundError(Exception):
-    def __init__(self, model_name):
-        self.model_name = model_name
-        super().__init__(f'model_name id: {model_name} not registered')
-
-
-def load_models():
-    '''
-    Populate the models DB, currently by walking the models directory
-    '''
-
-    models = next(os.walk(BASE_MODEL_DIR))[1]
-    for model in models:
-        MODELS[model] = os.path.join(BASE_MODEL_DIR, model)
-        if not os.path.exists(f"{MODELS[model]}.zip"):
-            # if the zip archive doesn't exist - create it
-            shutil.make_archive(MODELS[model], "zip", MODELS[model])
 
 
 class Execution:
@@ -78,8 +58,7 @@ class Execution:
         num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "4"))
         try:
             model_name = params['model_run']['model_name']
-            logger.info(
-                f'going to use model {model_name}: {MODELS[model_name]}')
+            logger.info(f'going to use model {model_name}')
         except:
             logger.info(f'No model name specified, or model not registered')
 
@@ -103,7 +82,7 @@ class Execution:
 
 
 async def execute_run_async(execution, params, run_permutation):
-    model_name = params['model_run']['model_name'] if 'model_name' in params['model_run'] else DEFAULT_MODEL
+    model_name = params['model_run']['model_name'] if 'model_name' in params['model_run'] else model_registry.DEFAULT_MODEL
     run_dir = model_execution.prepare_run_dir(execution.exec_id, run_permutation, model_name)
     execution.add_run(run_dir, run_permutation)
     out_file_contents = await model_execution.exec_model_async(run_dir, params['model_analysis']['output_file'])
@@ -167,16 +146,6 @@ def create_run_zip(run_dir, params, run_zip_name):
         run_zip.write(os.path.join(run_dir, out_file), out_file)
 
 
-def get_model_by_name(model_name):
-    try:
-        # model_dir = MODELS[model_name]
-        model_zip = f"{MODELS[model_name]}.zip"
-        with open(model_zip, "rb") as model_contents:
-            return model_contents.read()
-    except KeyError:
-        raise ModelNotFoundError(model_name)
-
-
 def get_run_parameter_value(param_name, contents):
     """
     Parses outfile contents and extracts the value for the field named as `param_name` from the last row
@@ -234,21 +203,3 @@ async def execute_dss(exec_id, params):
         current_execution.result = result
     finally:
         current_execution.mark_complete()
-
-
-def add_model(model_name, model_contents):
-    if model_name in MODELS:
-        raise Exception(f"model {model_name} already exists in DB")
-
-    model_dir = os.path.join(BASE_MODEL_DIR, model_name)
-    model_zip = zipfile.ZipFile(BytesIO(model_contents))
-    model_zip.extractall(model_dir)
-    MODELS[model_name] = model_dir
-
-    with open(os.path.join(BASE_MODEL_DIR, f"{model_name}.zip"), "wb") as model_file:
-        model_file.write(model_contents)
-
-
-def get_models():
-    for m in MODELS:
-        yield m
