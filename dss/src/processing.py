@@ -6,14 +6,14 @@ import itertools
 import logging
 import os
 import shutil
-import tempfile
 import uuid
 import zipfile
+
+import model_execution
 
 EXECUTIONS = {}
 MODELS = {}
 
-MODEL_EXE = os.environ.get("WQDSS_MODEL_EXE", "/dss-bin/w2_exe_linux_par")
 BASE_MODEL_DIR = os.environ.get("WQDSS_BASE_MODEL_DIR", "/models")
 BEST_RUNS_DIR = os.environ.get("WQDSS_BEST_RUNS_DIR", "/best_runs")
 DEFAULT_MODEL = "default"
@@ -29,12 +29,6 @@ def sliced(seq, n):
 class ExectuionState(Enum):
     RUNNING = 'RUNNING'
     COMPLETED = 'COMPLETED'
-
-
-class ModelDirNotFoundError(Exception):
-    def __init__(self, model_dir):
-        self.model_dir = model_dir
-        super().__init__(f'Model dir: {model_dir} not found')
 
 
 class ModelNotFoundError(Exception):
@@ -110,9 +104,9 @@ class Execution:
 
 async def execute_run_async(execution, params, run_permutation):
     model_name = params['model_run']['model_name'] if 'model_name' in params['model_run'] else DEFAULT_MODEL
-    run_dir = prepare_run_dir(execution.exec_id, run_permutation, model_name)
+    run_dir = model_execution.prepare_run_dir(execution.exec_id, run_permutation, model_name)
     execution.add_run(run_dir, run_permutation)
-    out_file_contents = await exec_model_async(run_dir, params['model_analysis']['output_file'])
+    out_file_contents = await model_execution.exec_model_async(run_dir, params['model_analysis']['output_file'])
     execution.set_run_output(run_dir, out_file_contents)
 
 
@@ -161,25 +155,6 @@ def values_range(min_val, max_val, step):
         i = i + 1
 
 
-def update_inputs_for_run(run_dir, input_values):
-    # for each file in params that should be updated:
-    input_files = input_values.files
-    for i in input_files:
-        # read the first contents of the input
-        with open(os.path.join(run_dir, i), 'r') as ifile:
-            contents = ifile.readlines()
-
-        # copy 2 header lines, and for the rest update the contents of the QWD value
-        reader = csv.DictReader(contents[2:])
-        with open(os.path.join(run_dir, i), 'w') as ofile:
-            ofile.writelines(contents[:2])
-            writer = csv.DictWriter(ofile, reader.fieldnames)
-            out_param = input_values.columns[i]
-            for row in reader:
-                row[out_param] = input_values.values[i]
-                writer.writerow(row)
-
-
 def create_run_zip(run_dir, params, run_zip_name):
     input_files = params['model_run']['input_files']
     out_file = params['model_analysis']['output_file']
@@ -202,36 +177,6 @@ def get_model_by_name(model_name):
         raise ModelNotFoundError(model_name)
 
 
-def prepare_run_dir(exec_id, param_values, model_name):
-    '''
-    Populates a temporary directory with the model files,
-    along with inputs provided by the user
-    '''
-
-    run_dir = tempfile.mkdtemp(prefix=f'wqdss-exec-{exec_id}')
-    os.rmdir(run_dir)
-
-    try:
-        model_contents = get_model_by_name(model_name)
-        model_zip = zipfile.ZipFile(BytesIO(model_contents))
-        model_zip.extractall(run_dir)
-        update_inputs_for_run(run_dir, param_values)
-    except FileNotFoundError:
-        raise ModelDirNotFoundError(model_name)
-
-    return run_dir
-
-
-async def exec_model_async(run_dir, output_file):
-    process = await asyncio.create_subprocess_exec(
-        MODEL_EXE, run_dir,
-        stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
-    logger.debug(f'going to execute process {process}')
-    await process.wait()
-    logger.debug(f'Finished executing {process}')
-    return get_out_file_contents(run_dir, output_file)
-
-
 def get_run_parameter_value(param_name, contents):
     """
     Parses outfile contents and extracts the value for the field named as `param_name` from the last row
@@ -247,12 +192,6 @@ def calc_param_score(value, target, score_step, weight):
 
     distance = abs(target - value)
     return (distance/score_step)/weight
-
-
-def get_out_file_contents(run_dir, out_file):
-    with open(os.path.join(run_dir, out_file), 'r') as ifile:
-        contents = ifile.readlines()
-    return contents
 
 
 def get_run_score(run_dir, params, outfile_contents):

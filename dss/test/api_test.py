@@ -2,7 +2,6 @@ import asyncio
 import logging
 import io
 import json
-import threading
 import unittest.mock as mock
 import zipfile
 

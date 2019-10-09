@@ -8,6 +8,7 @@ from pytest import approx
 from asynctest import CoroutineMock
 
 import processing
+import model_execution
 
 params = {
     'model_analysis': {
@@ -68,9 +69,9 @@ async def test_execute_dss():
         with open(os.path.join(run_dir, output_file), 'r') as f:
             return f.readlines()
 
-    with patch('processing.exec_model_async', new=CoroutineMock(side_effect=exec_model_side_effect)) as exec_model:
+    with patch('model_execution.exec_model_async', new=CoroutineMock(side_effect=exec_model_side_effect)) as exec_model:
         exec_model.side_effect = exec_model_side_effect
-        with patch('processing.prepare_run_dir') as prepare_run_dir:
+        with patch('model_execution.prepare_run_dir') as prepare_run_dir:
             prepare_run_dir.side_effect = create_prepare_run_dir_side_effect(params)
             with patch('processing.create_run_zip') as create_run_zip:
                 await processing.execute_dss(exec_id, params)
@@ -145,7 +146,7 @@ async def test_mock_stream():
         }
     }
     shutil.copy(os.path.join(processing.BASE_MODEL_DIR,
-                             processing.MODEL_EXE), mock_stream_dir)
+                             model_execution.MODEL_EXE), mock_stream_dir)
     shutil.make_archive('default', 'zip', mock_stream_dir)
     with open("default.zip", "rb") as f:
         processing.add_model("default", f.read())
@@ -168,7 +169,7 @@ async def test_model_or_dir_dont_exist():
     assert excinfo.value.model_name == 'somemodel'
 
     processing.MODELS['somemodel'] = '/test/does-not-exist'
-    with pytest.raises(processing.ModelDirNotFoundError) as excinfo:
+    with pytest.raises(model_execution.ModelDirNotFoundError) as excinfo:
         await processing.execute_dss('this-will-fail', test_params)
 
     assert excinfo.value.model_dir == 'somemodel'
