@@ -135,7 +135,7 @@ def test_add_model(api, tmp_path):
         z.write(file_b)
 
     files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}
-    resp = api.requests.post("/add-model", files=files)
+    resp = api.requests.post("/models", files=files)
 
     model_added_resp = resp.json()
     assert 'model_name' in model_added_resp

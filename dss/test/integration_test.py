@@ -22,7 +22,7 @@ def test_against_docker():
     with open(model_file_name, 'rb') as f:
         files = {'model': (model_name, f.read(), 'application/zip')}
 
-    resp = requests.post(f'{BASE_URL}/add-model', files=files)
+    resp = requests.post(f'{BASE_URL}/models', files=files)
     add_model_resp = resp.json()
     assert add_model_resp['model_name'] == model_name
 
