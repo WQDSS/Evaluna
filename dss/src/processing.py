@@ -6,8 +6,6 @@ import logging
 import os
 import shutil
 import uuid
-import zipfile
-
 
 import model_execution
 import model_registry
@@ -31,18 +29,19 @@ class ExectuionState(Enum):
 
 
 class Execution:
-    def __init__(self, exec_id, state=ExectuionState.RUNNING):
+    def __init__(self, exec_id, model_name, state=ExectuionState.RUNNING):
         self.state = state
         self.result = None
         self.exec_id = exec_id
         self.runs = []
+        self.model_execution_client = model_execution.RemoteModelExecution(model_name)
         EXECUTIONS[exec_id] = self
 
-    def add_run(self, run_dir, p):
-        self.runs.append((run_dir, p))
+    def add_run(self, run_id, p):
+        self.runs.append((run_id, p))
 
-    def set_run_output(self, run_dir, output):
-        run = next(filter(lambda r: r[0] == run_dir, self.runs))
+    def set_run_output(self, run_id, output):
+        run = next(filter(lambda r: r[0] == run_id, self.runs))
         run_index = self.runs.index(run)
         self.runs[run_index] = tuple(list(run) + [output])
 
@@ -52,6 +51,14 @@ class Execution:
 
     def mark_complete(self):
         self.state = ExectuionState.COMPLETED
+
+    def save_best_run(self, run_id):
+        best_run_out_dir = os.path.join(BEST_RUNS_DIR, self.exec_id)
+        os.makedirs(best_run_out_dir, exist_ok=True)
+        best_run_zip_path = os.path.join(best_run_out_dir, 'best_run.zip')
+
+        with open(best_run_zip_path, "wb") as best_run_file:
+            best_run_file.write(self.model_execution_client.get_run_zip(run_id).getvalue())
 
     async def execute(self, params):
         permutations = generate_permutations(params)
@@ -64,29 +71,27 @@ class Execution:
 
         for i, s in enumerate(sliced(permutations, num_parallel_execs)):
             logger.info(f'About to process slice {i}: {s}')
-            awaitables = [execute_run_async(self, params, p) for p in s]
+            awaitables = [self.execute_run_async(params, p) for p in s]
+            logger.info(f'Going to call gather')
             await asyncio.gather(*awaitables)
             logger.info(f'finished slice {i}: {s}')
 
-        run_scores = [(run_dir, p.values, get_run_score(run_dir, params, outfile_contents))
-                      for (run_dir, p, outfile_contents) in self.runs]
+        run_scores = [(run_id, p.values, get_run_score(run_id, params, outfile_contents))
+                      for (run_id, p, outfile_contents) in self.runs]
         best_run = min(run_scores, key=lambda x: x[2])
 
         # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
-        best_run_out_dir = os.path.join(BEST_RUNS_DIR, self.exec_id)
-        os.makedirs(best_run_out_dir, exist_ok=True)
-        best_run_zip_path = os.path.join(best_run_out_dir, 'best_run.zip')
-        create_run_zip(best_run[0], params, best_run_zip_path)
-
+        self.save_best_run(best_run[0])
         return {'best_run': best_run[0], 'params': best_run[1], 'score': best_run[2]}
 
-
-async def execute_run_async(execution, params, run_permutation):
-    model_name = params['model_run']['model_name'] if 'model_name' in params['model_run'] else model_registry.DEFAULT_MODEL
-    run_dir = model_execution.prepare_run_dir(execution.exec_id, run_permutation, model_name)
-    execution.add_run(run_dir, run_permutation)
-    out_file_contents = await model_execution.exec_model_async(run_dir, params['model_analysis']['output_file'])
-    execution.set_run_output(run_dir, out_file_contents)
+    async def execute_run_async(self, params, run_permutation):
+        run_id = get_run_id()
+        self.add_run(run_id, run_permutation)
+        logger.info(f"going to await run {run_id}")
+        out_file_contents = await self.model_execution_client.run(
+            self.exec_id, run_id, run_permutation, params['model_analysis']['output_file'])
+        logger.info(f"done awaiting run {run_id}")
+        self.set_run_output(run_id, out_file_contents)
 
 
 class ModelExecutionPermutation:
@@ -134,18 +139,6 @@ def values_range(min_val, max_val, step):
         i = i + 1
 
 
-def create_run_zip(run_dir, params, run_zip_name):
-    input_files = params['model_run']['input_files']
-    out_file = params['model_analysis']['output_file']
-
-    with zipfile.ZipFile(run_zip_name, 'w') as run_zip:
-        for in_file in input_files:
-            run_zip.write(os.path.join(
-                run_dir, in_file['name']), in_file['name'])
-
-        run_zip.write(os.path.join(run_dir, out_file), out_file)
-
-
 def get_run_parameter_value(param_name, contents):
     """
     Parses outfile contents and extracts the value for the field named as `param_name` from the last row
@@ -181,6 +174,10 @@ def get_exec_id():
     return str(uuid.uuid4())
 
 
+def get_run_id():
+    return str(uuid.uuid4())
+
+
 def get_status(exec_id):
     return EXECUTIONS[exec_id].state.value
 
@@ -197,7 +194,9 @@ def get_best_run(exec_id):
 
 async def execute_dss(exec_id, params):
     # TODO: extract handling the Execution to a context
-    current_execution = Execution(exec_id)
+    model_run_params = params['model_run']
+    model_name = model_run_params['model_name'] if 'model_name' in model_run_params else model_execution.DEFAULT_MODEL
+    current_execution = Execution(exec_id, model_name)
     try:
         result = await current_execution.execute(params)
         current_execution.result = result

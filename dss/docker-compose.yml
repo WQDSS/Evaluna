@@ -1,0 +1,13 @@
+version: "3"
+services:
+  app:
+    image: "waterqualitydss:latest"
+    depends_on:
+      - "model-registry"
+    ports:
+      - "8000:80"
+  model-registry:
+    image: "waterqualitydss:latest"
+    entrypoint:
+      - "python3"
+      - "src/model_registry_api.py"

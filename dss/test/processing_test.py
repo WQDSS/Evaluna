@@ -46,7 +46,7 @@ async def test_execute_dss():
 
     def create_prepare_run_dir_side_effect(params):
 
-        def create_out_csv(exec_id, param_values, model_name):
+        def create_out_csv(exec_id, param_values, model_name, model_registry_client):
             '''
             Create a dummy csv file for tests
             '''
@@ -55,6 +55,10 @@ async def test_execute_dss():
                 os.makedirs(run_dir)
             except:
                 pass
+
+            for f in param_values.files:
+                with open(os.path.join(run_dir, f), 'wb'):
+                    pass
 
             with open(os.path.join(run_dir, params['model_analysis']['output_file']), 'w') as f:
                 f.write('NO3,NH4,DO,\n')
@@ -66,21 +70,17 @@ async def test_execute_dss():
 
         return create_out_csv
 
-    def exec_model_side_effect(run_dir, output_file):
-        with open(os.path.join(run_dir, output_file), 'r') as f:
-            return f.readlines()
-
-    with patch('model_execution.exec_model_async', new=CoroutineMock(side_effect=exec_model_side_effect)) as exec_model:
-        exec_model.side_effect = exec_model_side_effect
+    with patch('model_execution.exec_model_async', new=CoroutineMock()) as exec_model:
         with patch('model_execution.prepare_run_dir') as prepare_run_dir:
             prepare_run_dir.side_effect = create_prepare_run_dir_side_effect(params)
-            with patch('processing.create_run_zip') as create_run_zip:
+            with patch.object(processing.Execution, 'save_best_run') as save_best_run:
                 await processing.execute_dss(exec_id, params)
 
     assert exec_model.call_count == 6 * 3  # 6 values for q_in, 3 values for hangq01
     assert prepare_run_dir.call_count == 6 * 3
-    assert create_run_zip.call_count == 1  # called once for the best run
+    assert save_best_run.call_count == 1  # called once for the best run
     assert processing.get_result('foo')['score'] == approx(4.4)
+    # TODO: add assert about files passed in to_create_run zip
 
 
 def test_get_run_score():
@@ -170,25 +170,22 @@ async def test_model_or_dir_dont_exist():
     assert excinfo.value.model_name == 'somemodel'
 
     model_registry.MODELS['somemodel'] = '/test/does-not-exist'
-    with pytest.raises(model_execution.ModelDirNotFoundError) as excinfo:
+    with pytest.raises(model_registry.ModelNotFoundError) as excinfo:
         await processing.execute_dss('this-will-fail', test_params)
 
-    assert excinfo.value.model_dir == 'somemodel'
+    assert excinfo.value.model_name == 'somemodel'
 
 
 def test_create_run_zip():
 
     test_params = dict(params)
     run_dir = '/foo/bar'
-    run_zip_name = 'myfoo.zip'
 
     # The ZipFile object is used as a context manager, so mock the __enter__ call
     context_mock = Mock()
     zipfile_obj = MagicMock(__enter__=Mock(return_value=context_mock))
-    with patch('zipfile.ZipFile', return_value=zipfile_obj) as zip_file:
-
-        processing.create_run_zip(run_dir, test_params, run_zip_name)
-        zip_file.assert_called_once_with(run_zip_name, 'w')
-        assert zipfile_obj is zip_file.return_value
-        assert context_mock.write.call_count == len(
-            test_params['model_run']['input_files']) + 1  # One additional write for output file
+    input_files = test_params['model_run']['input_files']
+    with patch('zipfile.ZipFile', return_value=zipfile_obj) as zf:
+        zipbytes = model_execution.create_run_zip(run_dir, [f["name"] for f in input_files] + ['foobar'])
+        assert zf.call_args_list[0][0][0].getvalue() is zipbytes
+        assert context_mock.write.call_count == len(input_files) + 1  # One additional write for output file

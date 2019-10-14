@@ -10,7 +10,8 @@ from asynctest import CoroutineMock
 
 import api as service
 import processing
-
+import model_registry
+import model_registry_api
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -121,7 +122,7 @@ def test_get_best_run_in_progress(api):
             assert resp.json() == {"exec_id": "foobar"}
 
 
-def test_add_model(api, tmp_path):
+def test_add_model(tmp_path):
     file_a = tmp_path / "file.a"
     file_a.write_bytes("this is a file".encode())
 
@@ -135,11 +136,32 @@ def test_add_model(api, tmp_path):
         z.write(file_b)
 
     files = {'model': ('test_model', model_zip.read_bytes(), 'application/zip')}
-    resp = api.requests.post("/models", files=files)
+    resp = model_registry_api.api.requests.post("/models", files=files)
 
     model_added_resp = resp.json()
     assert 'model_name' in model_added_resp
     assert model_added_resp['model_name'] == 'test_model'
-    list_models_resp = api.requests.get('/models')
+    list_models_resp = model_registry_api.api.requests.get('/models')
     models_list = list_models_resp.json()
     assert 'test_model' in models_list['models']
+
+
+def test_model_registry_client(tmp_path):
+
+    # add a test model
+    file_a = tmp_path / "file.a"
+    file_a.write_bytes("this is a file".encode())
+    model_zip = tmp_path / "model.zip"
+
+    with zipfile.ZipFile(model_zip, 'w') as z:
+        z.write(file_a)
+
+    files = {'model': ('test_model-new', model_zip.read_bytes(), 'application/zip')}
+    model_registry_api.api.requests.post("/models", files=files)
+
+    # fetch the test model
+    model_registry_client = model_registry.ModelRegistryClient("/models", model_registry_api.api.requests)
+    model_contents = model_registry_client.get_model_by_name("test_model-new")
+
+    with open(model_zip, "rb") as model_f:
+        assert model_contents == model_f.read()
