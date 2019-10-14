@@ -59,12 +59,14 @@ def test_dss_execution(api, tmp_path):
     data = {'model_name': 'some_model'}
 
     start_event = asyncio.Event()
+    processing.EXECUTIONS = {}
 
     async def my_execute(params):
         await start_event.wait()
         expected_params = json.loads(INPUT_EXAMPLE)
         expected_params['model_run']['model_name'] = 'some_model'
         assert params == expected_params
+        processing.EXECUTIONS[next(iter(processing.EXECUTIONS.keys()))].result = RESPONSE
         return RESPONSE
 
     with api.requests:

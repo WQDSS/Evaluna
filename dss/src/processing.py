@@ -8,7 +8,6 @@ import shutil
 import uuid
 
 import model_execution
-import model_registry
 
 EXECUTIONS = {}
 
@@ -82,7 +81,7 @@ class Execution:
 
         # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
         self.save_best_run(best_run[0])
-        return {'best_run': best_run[0], 'params': best_run[1], 'score': best_run[2]}
+        self.result = {'best_run': best_run[0], 'params': best_run[1], 'score': best_run[2]}
 
     async def execute_run_async(self, params, run_permutation):
         run_id = get_run_id()
@@ -198,7 +197,6 @@ async def execute_dss(exec_id, params):
     model_name = model_run_params['model_name'] if 'model_name' in model_run_params else model_execution.DEFAULT_MODEL
     current_execution = Execution(exec_id, model_name)
     try:
-        result = await current_execution.execute(params)
-        current_execution.result = result
+        await current_execution.execute(params)
     finally:
         current_execution.mark_complete()
