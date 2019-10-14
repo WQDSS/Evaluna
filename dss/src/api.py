@@ -13,6 +13,7 @@ logger.setLevel(logging.DEBUG)
 
 
 api = responder.API()
+model_registry_client = model_registry.ModelRegistryClient()
 
 
 @api.route("/status/{exec_id}")
@@ -65,6 +66,26 @@ async def exec_dss(req, resp):
     loop.create_task(dss_task())
     logger.info("created task %s", exec_id)
     resp.media = {"id": exec_id}
+
+
+@api.route("/models")
+class ModelsResource:
+    '''Forwarding the models resource to the dedicated micro-service'''
+
+    def on_get(self, req, resp):
+        '''
+        Return all models currently registered
+        '''
+        resp.media = model_registry_client.get_models()
+
+    async def on_post(self, req, resp):
+        """
+        Upload a directory containing a calibrated model, receives an identifier for that model
+        """
+        files = await req.media('files')
+        model_contents = files['model']['content']
+        model_name = files['model']['filename']
+        resp.media = model_registry_client.add_model(model_name, model_contents)
 
 
 if __name__ == "__main__":
