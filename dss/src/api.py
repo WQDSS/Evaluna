@@ -88,6 +88,12 @@ class ModelsResource:
         resp.media = model_registry_client.add_model(model_name, model_contents)
 
 
+@api.route("/celery")
+async def call_celery(req, resp):
+    from wq2dss import tasks
+    resp.media = tasks.model_exec.delay("foobar", {"some_key": "some_val"}).get()
+
+
 if __name__ == "__main__":
     logger.info("app started!")
     debug = os.environ.get("DEBUG", False)

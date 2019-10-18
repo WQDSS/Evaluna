@@ -83,4 +83,4 @@ class ModelRegistryClient:
 
     def add_model(self, model_name, model_contents):
         files = {'model': (model_name, model_contents, 'application/zip')}
-        return self.requests.post("/models", files=files).json()
+        return self.requests.post(f"{self.uri}", files=files).json()

@@ -3,7 +3,8 @@ import os
 import responder
 import logging
 
-import model_registry
+import wq2dss
+import wq2dss.model_registry
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -13,15 +14,15 @@ api = responder.API()
 
 @api.on_event('startup')
 async def load_models():
-    model_registry.load_models()
+    wq2dss.model_registry.load_models()
 
 
 @api.route("/models/{name}")
 async def get_model_by_name(req, resp, *, name):
     try:
-        resp.content = model_registry.get_model_by_name(name)
+        resp.content = wq2dss.model_registry.get_model_by_name(name)
         resp.mimetype = "application/zip"
-    except model_registry.ModelNotFoundError:
+    except wq2dss.model_registry.ModelNotFoundError:
         resp.status_code = api.status_codes.not_found
 
 
@@ -31,7 +32,7 @@ class ModelsResource:
         '''
         Return all models currently registered
         '''
-        resp.media = {"models": list(model_registry.get_models())}
+        resp.media = {"models": list(wq2dss.model_registry.get_models())}
         logging.info('returned model list')
 
     async def on_post(self, req, resp):
@@ -41,7 +42,7 @@ class ModelsResource:
         files = await req.media('files')
         model_contents = files['model']['content']
         model_name = files['model']['filename']
-        model_registry.add_model(model_name, model_contents)
+        wq2dss.model_registry.add_model(model_name, model_contents)
         logger.info("Added model %s", model_name)
         resp.media = {"model_name": model_name}
 

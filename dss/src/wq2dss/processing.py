@@ -2,17 +2,19 @@ import asyncio
 import csv
 from enum import Enum
 import itertools
+from io import BytesIO
 import logging
 import os
 import shutil
 import uuid
 
-import model_execution
+from .model_execution import get_out_contents, ModelExecutionPermutation
+from .tasks import execute_on_worker
 
 EXECUTIONS = {}
 
 
-BEST_RUNS_DIR = os.environ.get("WQDSS_BEST_RUNS_DIR", "/best_runs")
+BEST_RUNS_DIR = os.environ.get("WQDSS_BEST_RUNS_DIR", os.path.join("/", "best_runs"))
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -28,77 +30,93 @@ class ExectuionState(Enum):
 
 
 class Execution:
-    def __init__(self, exec_id, model_name, state=ExectuionState.RUNNING):
+
+    class Run:
+        def __init__(self, run_id, permutation):
+            self.run_id = run_id
+            self.permutation = permutation
+            self.result = None
+
+        def get_run_output(self, output_file):
+            if self.result is not None:
+                return get_out_contents(self.result, output_file)
+            else:
+                raise Execution.RunNotCompletedError()
+
+        def save_results(self, results_zip_file):
+            with open(results_zip_file, "wb") as run_file:
+                run_file.write(self.result)
+
+        def score(self, params):
+            out_file = params['model_analysis']['output_file']
+            return get_run_score(params, self.get_run_output(out_file))
+
+    class RunNotCompletedError(Exception):
+        pass
+
+    def __init__(self, exec_id, execute_func, state=ExectuionState.RUNNING):
         self.state = state
         self.result = None
         self.exec_id = exec_id
         self.runs = []
-        self.model_execution_client = model_execution.RemoteModelExecution(model_name)
+        self.execute_func = execute_func
+        self.output_file = None
         EXECUTIONS[exec_id] = self
 
     def add_run(self, run_id, p):
-        self.runs.append((run_id, p))
+        run = Execution.Run(run_id, p)
+        self.runs.append(run)
+        return run
 
-    def set_run_output(self, run_id, output):
-        run = next(filter(lambda r: r[0] == run_id, self.runs))
-        run_index = self.runs.index(run)
-        self.runs[run_index] = tuple(list(run) + [output])
+    def find_best_run(self, params):
+
+        def run_score(run):
+            return run.score(params)
+
+        return min(self.runs, key=run_score)
 
     def clean(self):
-        for (run_dir, _) in self.runs:
-            shutil.rmtree(run_dir)
+        shutil.rmtree(BEST_RUNS_DIR)
 
     def mark_complete(self):
         self.state = ExectuionState.COMPLETED
 
-    def save_best_run(self, run_id):
-        best_run_out_dir = os.path.join(BEST_RUNS_DIR, self.exec_id)
-        os.makedirs(best_run_out_dir, exist_ok=True)
-        best_run_zip_path = os.path.join(best_run_out_dir, 'best_run.zip')
-
-        with open(best_run_zip_path, "wb") as best_run_file:
-            best_run_file.write(self.model_execution_client.get_run_zip(run_id).getvalue())
+    def save_best_run(self, run):
+        best_run_zip_path = best_run_file(self.exec_id)
+        os.makedirs(os.path.dirname(best_run_zip_path), exist_ok=True)
+        run.save_results(best_run_zip_path)
 
     async def execute(self, params):
         permutations = generate_permutations(params)
         num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "4"))
+        model_name = ""
         try:
             model_name = params['model_run']['model_name']
             logger.info(f'going to use model {model_name}')
         except:
             logger.info(f'No model name specified, or model not registered')
 
+        self.output_file = params['model_analysis']['output_file']
+
         for i, s in enumerate(sliced(permutations, num_parallel_execs)):
             logger.info(f'About to process slice {i}: {s}')
-            awaitables = [self.execute_run_async(params, p) for p in s]
+            awaitables = [self.execute_run_async(model_name, params, p) for p in s]
             logger.info(f'Going to call gather')
             await asyncio.gather(*awaitables)
             logger.info(f'finished slice {i}: {s}')
 
-        run_scores = [(run_id, p.values, get_run_score(run_id, params, outfile_contents))
-                      for (run_id, p, outfile_contents) in self.runs]
-        best_run = min(run_scores, key=lambda x: x[2])
+        best_run = self.find_best_run(params)
 
         # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
-        self.save_best_run(best_run[0])
-        self.result = {'best_run': best_run[0], 'params': best_run[1], 'score': best_run[2]}
+        self.save_best_run(best_run)
+        self.result = {'best_run': best_run.run_id, 'params': best_run.permutation, 'score': best_run.score(params)}
 
-    async def execute_run_async(self, params, run_permutation):
+    async def execute_run_async(self, model_name, params, run_permutation):
         run_id = get_run_id()
-        self.add_run(run_id, run_permutation)
-        logger.info(f"going to await run {run_id}")
-        out_file_contents = await self.model_execution_client.run(
-            self.exec_id, run_id, run_permutation, params['model_analysis']['output_file'])
+        run = self.add_run(run_id, run_permutation)
+        logger.info(f"going to await run {run_id} for model {model_name}")
+        run.result = await self.execute_func(model_name, run.permutation.as_dict(), self.output_file)
         logger.info(f"done awaiting run {run_id}")
-        self.set_run_output(run_id, out_file_contents)
-
-
-class ModelExecutionPermutation:
-
-    def __init__(self, input_files, columns, values):
-        self.files = input_files
-        self.columns = dict(zip(self.files, columns))
-        self.values = dict(zip(self.files, values))
 
 
 def generate_permutations(params):
@@ -155,7 +173,7 @@ def calc_param_score(value, target, score_step, weight):
     return (distance/score_step)/weight
 
 
-def get_run_score(run_dir, params, outfile_contents):
+def get_run_score(params, outfile_contents):
     """
     Based on the params field 'model_analysis' find the run for this score
     """
@@ -185,17 +203,21 @@ def get_result(exec_id):
     return EXECUTIONS[exec_id].result
 
 
+def best_run_file(exec_id):
+    return os.path.join(BEST_RUNS_DIR, exec_id, 'best_run.zip')
+
+
 def get_best_run(exec_id):
     """ Returns a zip file containing the outputs of the best run for the execution. """
-    best_run_out_dir = os.path.join(BEST_RUNS_DIR, exec_id, 'best_run.zip')
-    return open(best_run_out_dir, 'rb').read()
+    with open(best_run_file(exec_id), 'rb') as f:
+        return f.read()
 
 
 async def execute_dss(exec_id, params):
     # TODO: extract handling the Execution to a context
-    model_run_params = params['model_run']
-    model_name = model_run_params['model_name'] if 'model_name' in model_run_params else model_execution.DEFAULT_MODEL
-    current_execution = Execution(exec_id, model_name)
+    # model_run_params = params['model_run']
+    # model_name = model_run_params['model_name'] if 'model_name' in model_run_params else DEFAULT_MODEL
+    current_execution = Execution(exec_id, execute_on_worker)
     try:
         await current_execution.execute(params)
     finally:

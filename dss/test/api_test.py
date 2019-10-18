@@ -70,7 +70,7 @@ def test_dss_execution(api, tmp_path):
         return RESPONSE
 
     with api.requests:
-        with mock.patch.object(processing.Execution, 'execute', new=CoroutineMock(side_effect=my_execute)) as execute:
+        with mock.patch.object(processing.Execution, 'execute', new=CoroutineMock(side_effect=my_execute)):
             resp = api.requests.post("/dss", data=data, files=files)
 
     model_response = resp.json()
@@ -89,8 +89,9 @@ def test_dss_execution(api, tmp_path):
 
     # check that the best run output is reachable
     s = io.BytesIO()
-    with zipfile.ZipFile(s, 'w') as zf:
+    with zipfile.ZipFile(s, 'w'):
         pass
+
     empty_zip_contents = s.getvalue()
     with mock.patch('processing.get_best_run', return_value=empty_zip_contents):
         resp = api.requests.get(f"/best_run/{exec_id}")
