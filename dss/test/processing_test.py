@@ -173,3 +173,16 @@ def test_create_run_zip():
         zipbytes = wq2dss.model_execution.create_run_zip(run_dir, [f["name"] for f in input_files] + ['foobar'])
         assert zf.call_args_list[0][0][0].getvalue() is zipbytes
         assert context_mock.write.call_count == len(input_files) + 1  # One additional write for output file
+
+@pytest.mark.skip
+def test_celery_task():
+    assert False
+
+
+@pytest.mark.skip
+def test_model_execution_sync():
+    assert False
+
+@pytest.mark.skip
+def test_model_execution_async():
+    assert False

@@ -5,40 +5,42 @@ import os
 import responder
 import logging
 
-import model_registry
-import processing
+import wq2dss.model_registry
+import wq2dss.processing
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
 api = responder.API()
-model_registry_client = model_registry.ModelRegistryClient()
+model_registry_client = wq2dss.model_registry.ModelRegistryClient()
 
 
 @api.route("/status/{exec_id}")
 async def status(req, resp, *, exec_id):
     try:
-        status = processing.get_status(exec_id)
-        result = processing.get_result(exec_id)
+        status = wq2dss.processing.get_status(exec_id)
+        result = wq2dss.processing.get_result(exec_id)
     except KeyError:
         status = "NOT_FOUND"
         result = None
 
     resp.media = {"id": exec_id, "status": status}
     if result is not None:
-        resp.media["result"] = result
+        result_copy = dict(result)
+        result_copy["params"] = result["params"].values
+        resp.media["result"] = result_copy
         logging.info(result)
 
 
 @api.route("/best_run/{exec_id}")
 async def run_zip(req, resp, *, exec_id):
     try:
-        status = processing.get_status(exec_id)
+        status = wq2dss.processing.get_status(exec_id)
         if status != "COMPLETED":
             raise KeyError
 
-        resp.content = processing.get_best_run(exec_id)
+        resp.content = wq2dss.processing.get_best_run(exec_id)
         resp.mimetype = "application/zip"
     except KeyError:
         resp.status_code = 400
@@ -56,11 +58,11 @@ async def exec_dss(req, resp):
     if 'model_name' in media:
         params['model_run']['model_name'] = media['model_name'].decode()
 
-    exec_id = processing.get_exec_id()
+    exec_id = wq2dss.processing.get_exec_id()
 
     async def dss_task():
         logger.info("Going to execute dss!")
-        await processing.execute_dss(exec_id, params)
+        await wq2dss.processing.execute_dss(exec_id, params)
 
     loop = asyncio.get_event_loop()
     loop.create_task(dss_task())
@@ -86,12 +88,6 @@ class ModelsResource:
         model_contents = files['model']['content']
         model_name = files['model']['filename']
         resp.media = model_registry_client.add_model(model_name, model_contents)
-
-
-@api.route("/celery")
-async def call_celery(req, resp):
-    from wq2dss import tasks
-    resp.media = tasks.model_exec.delay("foobar", {"some_key": "some_val"}).get()
 
 
 if __name__ == "__main__":

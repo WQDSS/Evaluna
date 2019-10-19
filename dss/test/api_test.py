@@ -9,8 +9,8 @@ import pytest
 from asynctest import CoroutineMock
 
 import api as service
-import processing
-import model_registry
+import wq2dss.processing
+import wq2dss.model_registry
 import model_registry_api
 
 logging.basicConfig(level=logging.DEBUG)
@@ -50,7 +50,7 @@ def test_dss_execution(api, tmp_path):
     '''
     Test the execution of a dss, including setting the paramters, and polling for a result
     '''
-    RESPONSE = {"score": 4.2}
+    RESPONSE = {"score": 4.2, "params": mock.Mock(values=[])}
 
     file_obj = tmp_path / "data.t"
     file_obj.write_bytes(INPUT_EXAMPLE.encode())
@@ -59,18 +59,18 @@ def test_dss_execution(api, tmp_path):
     data = {'model_name': 'some_model'}
 
     start_event = asyncio.Event()
-    processing.EXECUTIONS = {}
+    wq2dss.processing.EXECUTIONS = {}
 
     async def my_execute(params):
         await start_event.wait()
         expected_params = json.loads(INPUT_EXAMPLE)
         expected_params['model_run']['model_name'] = 'some_model'
         assert params == expected_params
-        processing.EXECUTIONS[next(iter(processing.EXECUTIONS.keys()))].result = RESPONSE
+        wq2dss.processing.EXECUTIONS[next(iter(wq2dss.processing.EXECUTIONS.keys()))].result = RESPONSE
         return RESPONSE
 
     with api.requests:
-        with mock.patch.object(processing.Execution, 'execute', new=CoroutineMock(side_effect=my_execute)):
+        with mock.patch.object(wq2dss.processing.Execution, 'execute', new=CoroutineMock(side_effect=my_execute)):
             resp = api.requests.post("/dss", data=data, files=files)
 
     model_response = resp.json()
@@ -78,14 +78,14 @@ def test_dss_execution(api, tmp_path):
     exec_id = model_response['id']
 
     # we check for the running state before allowing the model to complete
-    assert api.requests.get(f"/status/{exec_id}").json()['status'] == processing.ExectuionState.RUNNING.value
+    assert api.requests.get(f"/status/{exec_id}").json()['status'] == wq2dss.processing.ExectuionState.RUNNING.value
 
     # the model can now execute
     start_event.set()
 
     resp = api.requests.get(f"/status/{exec_id}").json()
-    assert resp['status'] == processing.ExectuionState.COMPLETED.value
-    assert resp['result'] == RESPONSE
+    assert resp['status'] == wq2dss.processing.ExectuionState.COMPLETED.value
+    assert resp['result']['score'] == RESPONSE['score']
 
     # check that the best run output is reachable
     s = io.BytesIO()
@@ -93,7 +93,7 @@ def test_dss_execution(api, tmp_path):
         pass
 
     empty_zip_contents = s.getvalue()
-    with mock.patch('processing.get_best_run', return_value=empty_zip_contents):
+    with mock.patch('wq2dss.processing.get_best_run', return_value=empty_zip_contents):
         resp = api.requests.get(f"/best_run/{exec_id}")
         assert resp.status_code == 200
         assert resp.content == empty_zip_contents
@@ -106,7 +106,7 @@ def test_get_best_run_not_found(api):
         pass
 
     empty_zip_contents = s.getvalue()
-    with mock.patch('processing.get_best_run', return_value=empty_zip_contents):
+    with mock.patch('wq2dss.processing.get_best_run', return_value=empty_zip_contents):
         resp = api.requests.get(f"/best_run/foobar")
         assert resp.status_code == 400
         assert resp.json() == {"exec_id": "foobar"}
@@ -118,8 +118,8 @@ def test_get_best_run_in_progress(api):
         pass
 
     empty_zip_contents = s.getvalue()
-    with mock.patch('processing.get_best_run', return_value=empty_zip_contents):
-        with mock.patch('processing.get_status', return_value='IN_PROGRESS'):
+    with mock.patch('wq2dss.processing.get_best_run', return_value=empty_zip_contents):
+        with mock.patch('wq2dss.processing.get_status', return_value='IN_PROGRESS'):
             resp = api.requests.get(f"/best_run/foobar")
             assert resp.status_code == 400
             assert resp.json() == {"exec_id": "foobar"}
@@ -163,7 +163,7 @@ def test_model_registry_client(tmp_path):
     model_registry_api.api.requests.post("/models", files=files)
 
     # fetch the test model
-    model_registry_client = model_registry.ModelRegistryClient("/models", model_registry_api.api.requests)
+    model_registry_client = wq2dss.model_registry.ModelRegistryClient("/models", model_registry_api.api.requests)
     model_contents = model_registry_client.get_model_by_name("test_model-new")
 
     with open(model_zip, "rb") as model_f:

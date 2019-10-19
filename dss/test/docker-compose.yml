@@ -30,20 +30,20 @@ services:
     depends_on:
       - "model-registry"
       - "rabbitmq"
-  # app:
-  #   image: "waterqualitydss:latest"
-  #   depends_on:
-  #     - "model-registry"
-  #     - "rabbitmq"
+  app:
+    image: "waterqualitydss:latest"
+    depends_on:
+      - "model-registry"
+      - "rabbitmq"
   test:
     depends_on:
-      # - "app"
-      # - "model-registry"
+      - "app"
+      - "model-registry"
       - "model-exec"
       - "rabbitmq"
     image: "waterqualitydss-test:latest"
     command:
-      - "/test/processing_test.py"
+      - "/test/"
 # volumes:
 #   rabbitmq_data:
 #     driver: local
