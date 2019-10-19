@@ -41,8 +41,7 @@ COPY dss/src/ /app/src/
 ENV PYTHONPATH=/app/src
 COPY dss/test/ /test/
 
-# ignore collections warning about deprecation warning, there's nothing we can do about that for now
-ENTRYPOINT [ "pytest", "-W", "ignore::DeprecationWarning" ]
+ENTRYPOINT ["/test/run_tests.sh"]
 
 CMD ["/test/"]
 

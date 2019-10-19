@@ -26,6 +26,7 @@ def load_models():
 
     models = next(os.walk(BASE_MODEL_DIR))[1]
     for model in models:
+        logger.info(f"Loading model {model}")
         MODELS[model] = os.path.join(BASE_MODEL_DIR, model)
         if not os.path.exists(f"{MODELS[model]}.zip"):
             # if the zip archive doesn't exist - create it
@@ -34,7 +35,6 @@ def load_models():
 
 def get_model_by_name(model_name):
     try:
-        # model_dir = MODELS[model_name]
         model_zip = f"{MODELS[model_name]}.zip"
         with open(model_zip, "rb") as model_contents:
             return model_contents.read()
@@ -42,9 +42,14 @@ def get_model_by_name(model_name):
         raise ModelNotFoundError(model_name)
 
 
-def add_model(model_name, model_contents):
+def add_model(model_name, model_contents, ignore_already_exists=True):
+    logger.info(f"going to add model {model_name}")
     if model_name in MODELS:
-        raise Exception(f"model {model_name} already exists in DB")
+        msg = f"model {model_name} already exists in DB"
+        if ignore_already_exists:
+            logger.warning(msg)
+            return
+        raise Exception(msg)
 
     model_dir = os.path.join(BASE_MODEL_DIR, model_name)
     model_zip = zipfile.ZipFile(BytesIO(model_contents))
