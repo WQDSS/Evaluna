@@ -16,12 +16,9 @@ services:
     image: "waterqualitydss:latest"
     working_dir: "/app/src"
     entrypoint:
-      - "celery"
-      - "-A"
-      - "wq2dss"
-      - "worker"
-      - "-l"
-      - "info"
+      - "/bin/bash"
+      - "-c"
+      - "sleep 20 &&celery -A wq2dss worker -l info"
 
   rabbitmq:
     image: "bitnami/rabbitmq:3.8"
