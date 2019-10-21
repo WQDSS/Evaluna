@@ -1,0 +1,44 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: "wq2dss"
+  labels:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "wq2dss"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "wq2dss"
+    spec:
+      containers:
+        - name: wq2dss
+          image: "waterqualitydss"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources: {}
+          env:
+            - name: DEBUG
+              value: "true"
+      nodeSelector: {}
+      affinity: {}
+      tolerations: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wq2dss
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: wq2dss

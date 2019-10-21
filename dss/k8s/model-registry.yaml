@@ -1,0 +1,42 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: "model-registry"
+  labels:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "model-registry"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "model-registry"
+    spec:
+      containers:
+        - name: model-registry
+          image: "waterqualitydss"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          command: ["python3", "src/model_registry_api.py"]
+          resources: {}
+      nodeSelector: {}
+      affinity: {}
+      tolerations: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-registry
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: model-registry

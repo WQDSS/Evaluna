@@ -55,5 +55,4 @@ if __name__ == "__main__":
         log_level = 'debug'
 
     # add rendering of index.html as the default route
-    api.add_route("/", static=True)
     api.run(debug=debug, log_level=log_level)

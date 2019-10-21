@@ -47,6 +47,10 @@ function executeDss(form) {
     method: "POST",
     body: formData
   })
+    .then(r => {
+      console.log(r);
+      return r;
+    })
     .then(response => response.json())
     .then(data => {
       console.log(data);
