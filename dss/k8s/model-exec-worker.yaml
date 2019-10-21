@@ -4,7 +4,7 @@ metadata:
   name: "model-exec"
   labels:
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: "model-exec"
@@ -19,7 +19,21 @@ spec:
           imagePullPolicy: IfNotPresent
           workingDir: "/app/src"
           command: ["celery", "-A", "wq2dss", "worker", "-l", "info"]
-          resources: {}
+          resources:
+            requests:
+              cpu: "300m"
+
+      initContainers:
+        - name: check-rabbit
+          command:
+            - "bash"
+            - "-c"
+            - "echo thisisasecret > /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && chmod 600 /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && rabbitmqctl node_health_check -n rabbit@rabbitmq"
+          image: bitnami/rabbitmq:3.8
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+
       nodeSelector: {}
       affinity: {}
       tolerations: []

@@ -26,6 +26,10 @@ spec:
               value: "user"
             - name: RABBITMQ_PASSWORD
               value: "password"
+            - name: RABBITMQ_NODE_NAME
+              value: "rabbit@rabbitmq"
+            - name: RABBITMQ_ERL_COOKIE
+              value: "thisisasecret"
           resources: {}
 
       nodeSelector: {}
