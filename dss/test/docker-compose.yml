@@ -21,12 +21,9 @@ services:
     image: "waterqualitydss:latest"
     working_dir: "/app/src"
     entrypoint:
-      - "celery"
-      - "-A"
-      - "wq2dss"
-      - "worker"
-      - "-l"
-      - "info"
+      - "/bin/bash"
+      - "-c"
+      - "sleep 40 && celery -A wq2dss worker -l info"
     depends_on:
       - "model-registry"
       - "rabbitmq"
