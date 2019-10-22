@@ -13,9 +13,21 @@ spec:
       labels:
         app.kubernetes.io/name: "model-exec"
     spec:
+      imagePullSecrets:
+        - name: regcred
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: wq2dss-node-type
+                operator: In
+                values:
+                - worker
       containers:
         - name: model-exec
-          image: "waterqualitydss"
+          image: "booooh/waterqualitydss:511dffe"
           imagePullPolicy: IfNotPresent
           workingDir: "/app/src"
           command: ["celery", "-A", "wq2dss", "worker", "-l", "info"]

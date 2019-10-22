@@ -13,9 +13,21 @@ spec:
       labels:
         app.kubernetes.io/name: "wq2dss"
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: wq2dss-node-type
+                operator: In
+                values:
+                - default
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: wq2dss
-          image: "waterqualitydss"
+          image: "booooh/waterqualitydss:511dffe"
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
