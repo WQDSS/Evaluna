@@ -16,13 +16,13 @@ spec:
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: wq2dss-node-type
-                operator: In
-                values:
-                - default
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: wq2dss-node-type
+                    operator: In
+                    values:
+                      - default
       imagePullSecrets:
         - name: regcred
       containers:
@@ -49,7 +49,6 @@ spec:
             runAsUser: 0
 
       nodeSelector: {}
-      affinity: {}
       tolerations: []
 ---
 apiVersion: v1

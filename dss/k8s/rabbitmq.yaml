@@ -15,13 +15,13 @@ spec:
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: wq2dss-node-type
-                operator: In
-                values:
-                - default
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: wq2dss-node-type
+                    operator: In
+                    values:
+                      - default
       containers:
         - name: rabbitmq
           image: "bitnami/rabbitmq:3.8"
@@ -43,7 +43,6 @@ spec:
           resources: {}
 
       nodeSelector: {}
-      affinity: {}
       tolerations: []
 ---
 apiVersion: v1

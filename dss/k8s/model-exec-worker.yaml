@@ -18,13 +18,13 @@ spec:
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: wq2dss-node-type
-                operator: In
-                values:
-                - worker
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: wq2dss-node-type
+                    operator: In
+                    values:
+                      - worker
       containers:
         - name: model-exec
           image: "booooh/waterqualitydss:511dffe"
@@ -47,5 +47,4 @@ spec:
             runAsUser: 0
 
       nodeSelector: {}
-      affinity: {}
       tolerations: []
