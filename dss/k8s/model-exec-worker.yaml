@@ -1,0 +1,50 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: "model-exec"
+  labels:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "model-exec"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "model-exec"
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: wq2dss-node-type
+                    operator: In
+                    values:
+                      - worker
+      containers:
+        - name: model-exec
+          image: "booooh/waterqualitydss:511dffe"
+          imagePullPolicy: IfNotPresent
+          workingDir: "/app/src"
+          command: ["celery", "-A", "wq2dss", "worker", "-l", "info"]
+          resources:
+            requests:
+              cpu: "300m"
+
+      initContainers:
+        - name: check-rabbit
+          command:
+            - "bash"
+            - "-c"
+            - "echo thisisasecret > /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && chmod 600 /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && rabbitmqctl node_health_check -n rabbit@rabbitmq"
+          image: bitnami/rabbitmq:3.8
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+
+      nodeSelector: {}
+      tolerations: []

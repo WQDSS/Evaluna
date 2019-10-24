@@ -1,0 +1,66 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: "wq2dss"
+  labels:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "wq2dss"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: "wq2dss"
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: wq2dss-node-type
+                    operator: In
+                    values:
+                      - default
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: wq2dss
+          image: "booooh/waterqualitydss:511dffe"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources: {}
+          env:
+            - name: DEBUG
+              value: "true"
+      initContainers:
+        - name: check-rabbit
+          command:
+            - "bash"
+            - "-c"
+            - "echo thisisasecret > /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && chmod 600 /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && rabbitmqctl node_health_check -n rabbit@rabbitmq"
+          image: bitnami/rabbitmq:3.8
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+
+      nodeSelector: {}
+      tolerations: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wq2dss
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: wq2dss

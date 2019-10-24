@@ -1,8 +1,46 @@
-version: '3'
+version: "3"
 services:
-  app:         
+  model-registry:
     image: "waterqualitydss:latest"
+    entrypoint:
+      - "python3"
+      - "src/model_registry_api.py"
+  rabbitmq:
+    image: "bitnami/rabbitmq:3.7"
+    ports:
+      - "4369:4369"
+      - "5672:5672"
+      - "25672:25672"
+      - "15672:15672"
+    # volumes:
+    #   - "rabbitmq_data:/bitnami"
+    environment:
+      - RABBITMQ_USERNAME=user
+      - RABBITMQ_PASSWORD=password
+  model-exec:
+    image: "waterqualitydss:latest"
+    working_dir: "/app/src"
+    entrypoint:
+      - "/bin/bash"
+      - "-c"
+      - "sleep 40 && celery -A wq2dss worker -l info"
+    depends_on:
+      - "model-registry"
+      - "rabbitmq"
+  app:
+    image: "waterqualitydss:latest"
+    depends_on:
+      - "model-registry"
+      - "rabbitmq"
   test:
     depends_on:
       - "app"
+      - "model-registry"
+      - "model-exec"
+      - "rabbitmq"
     image: "waterqualitydss-test:latest"
+    command:
+      - "/test/"
+# volumes:
+#   rabbitmq_data:
+#     driver: local
