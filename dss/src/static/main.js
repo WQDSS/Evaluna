@@ -15,7 +15,9 @@ function setup(modelFormElement, selectElement, formElement, resultElement) {
   }
 
   function updateModelList(e) {
-    populateModelsInselect(selectElement);
+    populateModelsInselect(selectElement).then(elem => {
+      M.FormSelect.init(elem, {});
+    });
   }
 
   formElement.addEventListener("dssUpdate", updateResults);
@@ -24,7 +26,7 @@ function setup(modelFormElement, selectElement, formElement, resultElement) {
 }
 
 function populateModelsInselect(selectElement) {
-  fetch("models")
+  return fetch("models")
     .then(response => response.json())
     .then(data => {
       console.log(data);
@@ -36,6 +38,7 @@ function populateModelsInselect(selectElement) {
 
       // set to a null value
       selectElement.value = null;
+      return selectElement;
     });
 }
 
