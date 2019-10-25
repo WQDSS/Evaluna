@@ -20,46 +20,77 @@
             const selectElement = document.getElementById("select-model-list")
             const formElement = document.getElementById("form-dss")
             const resultElement = document.getElementById("div-results")
-            setup(modelFormElement, selectElement, formElement, resultElement)            
-            console.log(instances)
+            M.Collapsible.init(document.getElementById("main-collapsible"), {});         
+            setup(modelFormElement, selectElement, formElement, resultElement)
+            
         })
     </script>
 </head>
-<body>            
-    
-    <div id="div-dss-submit" class="input-field col s12">
-        <form id="form-dss">
-            <fieldset>
-                <legend>Select Model and DSS parameters</legend>
-                <label for="select-model-list">Model to use:</label>
-                <select id="select-model-list" name="model_name"></select>
-                <div class="file-field input-field">
-                    <div class="btn">
-                        <span>File</span>
-                        <input id="input-params-file" type="file">
-                    </div>
-                    <div class="file-path-wrapper">
-                        <input class="file-path validate" type="text" placeholder="Select input parameters file for DSS">
+<body>
+    <div class="container">
+        <ul class="collapsible" id="main-collapsible">
+            <li class="active">
+                <div class="collapsible-header"><i class="material-icons">directions_run</i>Execute DSS</div>
+                <div class="collapsible-body">
+                    <div id="div-dss-submit" class="input-field">
+                        <form id="form-dss">
+                            <label for="select-model-list">Model to use:</label>
+                            <select id="select-model-list" name="model_name"></select>
+                            <div class="file-field input-field">
+                                <div class="btn-small">
+                                    <i class="material-icons">attach_file</i>
+                                    <span>Input Parameters</span>
+                                    <input id="input-params-file" name="input" type="file">
+                                </div>
+                                <div class="file-path-wrapper">
+                                    <input class="file-path validate" type="text"
+                                        placeholder="Select input parameters file for DSS">
+                                </div>
+                            </div>
+                            <button class="btn waves-effect waves-light" type="submit" name="action"
+                                id="button-submit-dss">Execute</button>
+                        </form>
                     </div>
                 </div>
-
-                <button class="btn waves-effect waves-light" type="submit" name="action" id="button-submit-dss">
-                    Execute                    
-                </button>                
-            </fieldset>
-        </form>
-    </div>
-    <div id="div-model-submit" class="input-field col s12">
-        <form id="form-model-upload">
-            <fieldset>
-                <legend>Upload a new model</legend>
-                <p><input id="input-model-file" name="model" type="file"></input></p>
-                <p><button type="submit" id="button-submit-dss">Upload Model</button></p>
-            </fieldset>
-        </form>
-    </div>
-    <div id="div-results">
-
+            </li>
+            <li>
+                <div class="collapsible-header"><i class="material-icons">cloud_upload</i>Upload Model</div>
+                <div class="collapsible-body">
+                    <div id="div-model-submit" class="input-field">
+                        <form id="form-model-upload">
+                            <div class="file-field input-field">
+                                <div class="btn-small">
+                                    <i class="material-icons">attach_file</i>
+                                    <span>Select Model</span>
+                                    <input id="input-model-file" name="model" type="file">
+                                </div>
+                                <div class="file-path-wrapper">
+                                    <input class="file-path validate" type="text" placeholder="Select model to upload">
+                                </div>
+                            </div>
+                    
+                            <button class="btn waves-effect waves-light" type="submit" name="action">Upload Model</button></p>
+                        </form>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <div class="collapsible-header"><i class="material-icons">list</i>Previous DSS Executions</div>
+                <div class="collapsible-body"><span>Lorem ipsum dolor sit amet.</span></div>
+            </li>
+        </ul>
+        <div class="row">
+            <div class="col s12">
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">Results</span>
+                        <div id="div-results">
+                                    
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>

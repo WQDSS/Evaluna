@@ -80,10 +80,17 @@ function monitorExecution(executionId, form) {
 }
 
 function dssUpdate(resultElement, e) {
-  resultElement.innerHTML += `<pre>${JSON.stringify(e.detail)}</pre>`;
+  resultElement.innerHTML += `<pre>${JSON.stringify(
+    e.detail,
+    undefined,
+    2
+  )}</pre>`;
   if (e.detail.link !== undefined) {
     resultElement.innerHTML += `<a href=${e.detail.link}>best run</a>`;
   }
+
+  // auto-scroll
+  resultElement.scrollTop = resultElement.scrollHeight;
 }
 
 function uploadModel(modelFormElement) {
