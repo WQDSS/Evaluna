@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: "model-registry"
   labels:
+    app.kubernetes.io/name: "model-registry"
 spec:
   replicas: 1
   selector:

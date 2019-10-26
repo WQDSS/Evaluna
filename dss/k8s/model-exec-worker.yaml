@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: "model-exec"
   labels:
+    app.kubernetes.io/name: "model-exec"
 spec:
   replicas: 1
   selector:

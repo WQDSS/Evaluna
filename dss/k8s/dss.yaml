@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: "wq2dss"
   labels:
+    app.kubernetes.io/name: "wq2dss"
 spec:
   replicas: 1
   selector:
@@ -27,7 +28,7 @@ spec:
         - name: regcred
       containers:
         - name: wq2dss
-          image: "booooh/waterqualitydss:017fc17"
+          image: "booooh/waterqualitydss:1572126482"
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -71,6 +71,12 @@ async def exec_dss(req, resp):
     resp.media = {"id": exec_id}
 
 
+@api.route("/executions")
+async def completed_executions(req, resp):
+    logger.info("fetching previous executions")
+    resp.media = wq2dss.processing.get_executions()
+
+
 @api.route("/models")
 class ModelsResource:
     '''Forwarding the models resource to the dedicated micro-service'''

@@ -1,8 +1,8 @@
 import asyncio
 import csv
+import datetime
 from enum import Enum
 import itertools
-from io import BytesIO
 import logging
 import os
 import shutil
@@ -62,6 +62,8 @@ class Execution:
         self.execute_func = execute_func
         self.output_file = None
         EXECUTIONS[exec_id] = self
+        self.model_name = None
+        self.start_time = None
 
     def add_run(self, run_id, p):
         run = Execution.Run(run_id, p)
@@ -89,18 +91,15 @@ class Execution:
     async def execute(self, params):
         permutations = generate_permutations(params)
         num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "4"))
-        model_name = ""
-        try:
-            model_name = params['model_run']['model_name']
-            logger.info(f'going to use model {model_name}')
-        except:
-            logger.info(f'No model name specified, or model not registered')
+        self.model_name = params['model_run']['model_name']
+        self.start_time = datetime.datetime.now()
+        logger.info(f'going to use model {self.model_name}')
 
         self.output_file = params['model_analysis']['output_file']
 
         for i, s in enumerate(sliced(permutations, num_parallel_execs)):
             logger.info(f'About to process slice {i}: {s}')
-            awaitables = [self.execute_run_async(model_name, params, p) for p in s]
+            awaitables = [self.execute_run_async(self.model_name, params, p) for p in s]
             logger.info(f'Going to call gather')
             await asyncio.gather(*awaitables)
             logger.info(f'finished slice {i}: {s}')
@@ -211,6 +210,21 @@ def get_best_run(exec_id):
     """ Returns a zip file containing the outputs of the best run for the execution. """
     with open(best_run_file(exec_id), 'rb') as f:
         return f.read()
+
+
+def simple_execution(exec_id, execution):
+    simple_exec = {
+        'id': exec_id,
+        'model_name': execution.model_name,
+        'start_time': str(execution.start_time),
+        'result': dict(execution.result)
+    }
+    simple_exec['result']['params'] = simple_exec['result']['params'].as_dict()
+    return simple_exec
+
+
+def get_executions():
+    return {"executions": [simple_execution(exec_id, execution) for exec_id, execution in EXECUTIONS.items()]}
 
 
 async def execute_dss(exec_id, params):
