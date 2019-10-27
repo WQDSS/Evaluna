@@ -8,7 +8,7 @@ import os
 import shutil
 import uuid
 
-from .model_execution import get_out_contents, ModelExecutionPermutation
+from .model_execution import get_out_contents, ModelExecutionPermutation, DEFAULT_MODEL
 from .tasks import execute_on_worker
 
 EXECUTIONS = {}
@@ -91,7 +91,11 @@ class Execution:
     async def execute(self, params):
         permutations = generate_permutations(params)
         num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "4"))
-        self.model_name = params['model_run']['model_name']
+        try:
+            self.model_name = params['model_run']['model_name']
+        except KeyError:
+            self.model_name = DEFAULT_MODEL
+
         self.start_time = datetime.datetime.now()
         logger.info(f'going to use model {self.model_name}')
 
