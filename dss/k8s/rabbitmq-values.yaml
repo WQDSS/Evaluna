@@ -1,0 +1,17 @@
+rabbitmq:
+  username: "user"
+  password: "password"
+  erlangCookie: "thisisasecret"
+  maxAvailableSchedulers: 1
+
+resources:
+  requests:
+    memory: "1024Mi"
+  limits:
+    memory: "2048Mi"
+
+livenessProbe:
+  enabled: false
+
+readinessProbe:
+  enabled: false

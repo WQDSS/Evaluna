@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: "model-exec"
@@ -16,15 +16,15 @@ spec:
     spec:
       imagePullSecrets:
         - name: regcred
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: wq2dss-node-type
-                    operator: In
-                    values:
-                      - worker
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #         - matchExpressions:
+      #             - key: wq2dss-node-type
+      #               operator: In
+      #               values:
+      #                 - worker
       containers:
         - name: model-exec
           image: "booooh/waterqualitydss:511dffe"
@@ -35,16 +35,16 @@ spec:
             requests:
               cpu: "300m"
 
-      initContainers:
-        - name: check-rabbit
-          command:
-            - "bash"
-            - "-c"
-            - "echo thisisasecret > /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && chmod 600 /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && rabbitmqctl node_health_check -n rabbit@rabbitmq"
-          image: bitnami/rabbitmq:3.8
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            runAsUser: 0
+      # initContainers:
+      #   - name: check-rabbit
+      #     command:
+      #       - "bash"
+      #       - "-c"
+      #       - "echo thisisasecret > /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && chmod 600 /opt/bitnami/rabbitmq/.rabbitmq/.erlang.cookie && rabbitmqctl node_health_check -n rabbit@rabbitmq"
+      #     image: bitnami/rabbitmq:3.8
+      #     imagePullPolicy: IfNotPresent
+      #     securityContext:
+      #       runAsUser: 0
 
       nodeSelector: {}
       tolerations: []

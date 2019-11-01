@@ -10,6 +10,7 @@ pytest-asyncio = "*"
 asynctest = "*"
 autopep8 = "*"
 flake8 = "*"
+semver = "~=2.9"
 
 [packages]
 responder = "~=1.3.0"

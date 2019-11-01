@@ -1,0 +1,99 @@
+replicaCount: 1
+
+image:
+  repository: "booooh/waterqualitydss"
+  pullPolicy: IfNotPresent
+  tag: "1572126482"
+  pullSecretsName: "regcred"
+
+nameOverride: ""
+fullnameOverride: ""
+
+
+
+service:
+  type: NodePort
+  port: 80
+
+ingress:
+  enabled: false
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: wq2dss-ip
+    
+  # hosts:
+  #   - host: chart-example.local
+  #     paths: []
+
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+hpa:
+  enabled: false
+  targetCPUUtilizationPercentage: 80
+  minWorkerreplicaCount: 1
+  maxWorkerreplicaCount: 5
+
+resources: 
+  modelRegistry: {}
+  dss: {}
+  modelExec:
+    requests:
+      cpu: "300m"
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+
+affinity:
+  enabled: false
+  default:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          preference:
+            matchExpressions:
+              - key: wq2dss-node-type
+                operator: In
+                values:
+                  - default
+  worker:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: wq2dss-node-type
+                operator: In
+                values:
+                  - worker
+rabbitmq:
+  fullnameOverride: "rabbitmq"
+  rabbitmq:
+    username: "user"
+    password: "password"
+    erlangCookie: "thisisasecret"
+    maxAvailableSchedulers: 1
+
+  resources:
+    requests:
+      memory: "1024Mi"
+    limits:
+      memory: "2048Mi"
+
+  livenessProbe:
+    enabled: false
+
+  readinessProbe:
+    enabled: false

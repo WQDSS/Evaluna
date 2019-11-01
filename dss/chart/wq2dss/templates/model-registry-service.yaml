@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ template "wq2dss.fullname" . }}-model-registry"
+  labels:
+{{ include "wq2dss.labels" . | indent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: "{{ template "wq2dss.fullname" . }}-model-registry"
+    app.kubernetes.io/instance: {{ .Release.Name }}

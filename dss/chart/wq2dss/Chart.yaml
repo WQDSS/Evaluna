@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: '1572643794'
+dependencies:
+- name: rabbitmq
+  version: 6.11.0
+description: A Helm chart for Kubernetes
+name: wq2dss
+type: application
+version: 0.2.1
