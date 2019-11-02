@@ -35,6 +35,9 @@ hpa:
   minWorkerreplicaCount: 1
   maxWorkerreplicaCount: 5
 
+test:
+  enabled: false
+
 resources: 
   modelRegistry: {}
   dss: {}
