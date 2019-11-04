@@ -1,5 +1,10 @@
 #! /bin/bash -e
-docker build --rm -f "Dockerfile" --build-arg http_proxy="$http_proxy" --build-arg https_proxy="$https_proxy" -t waterqualitydss-test:latest --target test .
-docker build --rm -f "Dockerfile" --build-arg http_proxy="$http_proxy" --build-arg https_proxy="$https_proxy" -t waterqualitydss:latest .
 
-docker-compose -f dss/test/docker-compose.yml up --abort-on-container-exit
+TAG=$(date +%s)
+export TAG
+
+# build the docker images, including the test image, and bump the appVersion in the chart
+./dss/scripts/build_and_push_to_docker_hub.sh bump
+
+# run the tests in the cluster
+./dss/scripts/run_tests_in_cluster.sh $TAG

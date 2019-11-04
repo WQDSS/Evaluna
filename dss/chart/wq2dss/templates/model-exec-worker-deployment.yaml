@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "wq2dss.fullname" . }}-model-exec
+  labels:
+{{ include "wq2dss.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "wq2dss.name" . }}-model-exec
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "wq2dss.name" . }}-model-exec
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecretsName}}
+      containers:
+        - name: model-exec
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          workingDir: "/app/src"
+          command: ["celery", "-A", "wq2dss", "worker", "-l", "info"]
+          env:
+            - name: "MODEL_REGISTRY_SERVICE"
+              value: "{{ template "wq2dss.fullname" . }}-model-registry"
+          resources:
+{{ toYaml .Values.resources.modelExec | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity.default }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

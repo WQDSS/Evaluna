@@ -1,0 +1,19 @@
+{{- if .Values.test.enabled -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ template "wq2dss.fullname" . }}-test
+  labels:
+{{ include "wq2dss.labels" . | indent 4 }}
+spec:
+  terminationGracePeriodSeconds: 3
+  imagePullSecrets:
+    - name: {{ .Values.image.pullSecretsName}}
+  containers:
+    - name: test
+      image: "{{ .Values.image.repository }}-test:{{ .Chart.AppVersion }}"
+      command: ["sleep", "infinity"]
+      env:      
+        - name: "MODEL_REGISTRY_SERVICE"
+          value: "{{ template "wq2dss.fullname" . }}-model-registry"
+{{- end }}

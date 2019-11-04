@@ -8,6 +8,7 @@ import requests
 
 MODELS = {}
 BASE_MODEL_DIR = os.environ.get("WQDSS_BASE_MODEL_DIR", "/models")
+MODEL_REGISTRY_SERVICE = os.environ.get("MODEL_REGISTRY_SERVICE", "model-registry")
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -67,7 +68,7 @@ def get_models():
 
 class ModelRegistryClient:
 
-    def __init__(self, uri="http://model-registry:80/models", requests_mod=None):
+    def __init__(self, uri=f"http://{MODEL_REGISTRY_SERVICE}:80/models", requests_mod=None):
         self.uri = uri
         self.requests = requests_mod or requests
 

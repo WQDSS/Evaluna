@@ -15,7 +15,9 @@ function setup(modelFormElement, selectElement, formElement, resultElement) {
   }
 
   function updateModelList(e) {
-    populateModelsInselect(selectElement);
+    populateModelsInselect(selectElement).then(elem => {
+      M.FormSelect.init(elem, {});
+    });
   }
 
   formElement.addEventListener("dssUpdate", updateResults);
@@ -24,7 +26,7 @@ function setup(modelFormElement, selectElement, formElement, resultElement) {
 }
 
 function populateModelsInselect(selectElement) {
-  fetch("models")
+  return fetch("models")
     .then(response => response.json())
     .then(data => {
       console.log(data);
@@ -36,6 +38,24 @@ function populateModelsInselect(selectElement) {
 
       // set to a null value
       selectElement.value = null;
+      return selectElement;
+    });
+}
+
+function createExecutionListItem(execution) {
+  const li = document.createElement("li");
+  li.innerHTML = JSON.stringify(execution);
+  return li;
+}
+
+function fetchPreviousResults(executionsListElement) {
+  return fetch("executions")
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      data["executions"].forEach(execution => {
+        executionsListElement.appendChild(createExecutionListItem(execution));
+      });
     });
 }
 
@@ -77,10 +97,25 @@ function monitorExecution(executionId, form) {
 }
 
 function dssUpdate(resultElement, e) {
-  resultElement.innerHTML += `<pre>${JSON.stringify(e.detail)}</pre>`;
-  if (e.detail.link !== undefined) {
-    resultElement.innerHTML += `<a href=${e.detail.link}>best run</a>`;
+  let execResult = resultElement.querySelector(`#result-${e.detail.id}`);
+
+  // if the result block doesn't exist yet, create it and append to overall results
+  if (execResult === null) {
+    execResult = document.createElement("div");
+    execResult.setAttribute("id", `result-${e.detail.id}`);
+    resultElement.appendChild(execResult);
   }
+
+  execResult.innerHTML = `<pre>${JSON.stringify(e.detail, undefined, 2)}</pre>`;
+  if (e.detail.status == "RUNNING") {
+    execResult.innerHTML += `<div class="progress"><div class="indeterminate"></div></div>`;
+  }
+  if (e.detail.link !== undefined) {
+    execResult.innerHTML += `<a href=${e.detail.link}>best run</a>`;
+  }
+
+  // auto-scroll to the bottom of the results
+  resultElement.scrollTop = resultElement.scrollHeight;
 }
 
 function uploadModel(modelFormElement) {

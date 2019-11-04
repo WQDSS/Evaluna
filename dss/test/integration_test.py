@@ -6,8 +6,10 @@ import zipfile
 
 import requests
 
-BASE_URL = 'http://app:80'
-BASE_MODEL_REGISTRY_URL = 'http://model-registry:80'
+WQ2DSS_SERVICE = os.environ.get("WQ2DSS_SERVICE_HOST", "wq2dss")
+BASE_URL = f'http://{WQ2DSS_SERVICE}:80'
+MODEL_REGISTRY_SERVICE = os.environ.get("MODEL_REGISTRY_SERVICE", "model-registry")
+BASE_MODEL_REGISTRY_URL = f'http://{MODEL_REGISTRY_SERVICE}:80'
 TEST_MODEL_DIR = '/test/mock_stream_A/'
 
 
