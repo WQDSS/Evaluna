@@ -174,6 +174,50 @@ def test_create_run_zip():
         assert zf.call_args_list[0][0][0].getvalue() is zipbytes
         assert context_mock.write.call_count == len(input_files) + 1  # One additional write for output file
 
+
+@pytest.mark.asyncio
+async def test_failed_processing():
+    """
+    Test handling of processing failure
+    """
+
+    exec_id = 'mock_stream_exec'
+    mock_stream_dir = "/test/mock_stream_A"
+    test_params = {
+        "model_run": {
+            "model_name": "default_t2",
+            "type": "flow",
+            "input_files": [
+                {"name": "hangq07.csv", "col_name": "Q",
+                    "min_val": "1", "max_val": "2", "steps": "0.5"},
+                {"name": "qin_br8.csv", "col_name": "QWD",
+                    "min_val": "30", "max_val": "34", "steps": "2"}
+            ]
+        },
+        "model_analysis": {
+            "type": "quality",
+            "output_file": "tsr_2_seg7.csv",
+            "parameters": [
+                {"name": "TN", "target": "0.6", "weight": "4", "score_step": "0.1"},
+                {"name": "DO", "target": "11", "weight": "2", "score_step": "0.5"}
+            ]
+        }
+    }
+    shutil.copy(os.path.join(wq2dss.model_registry.BASE_MODEL_DIR,
+                             wq2dss.model_execution.MODEL_EXE), mock_stream_dir)
+    shutil.make_archive('default_t2', 'zip', mock_stream_dir)
+    registry_client = wq2dss.model_registry.ModelRegistryClient()
+    with open("default_t2.zip", "rb") as f:
+        registry_client.add_model("default_t2", f.read())
+
+    with pytest.raises(Exception):
+        await wq2dss.processing.execute_dss(exec_id, test_params)
+
+    dss_result = wq2dss.processing.get_result(exec_id)
+    assert dss_result['error'] is not None
+    assert dss_result['score'] == 0
+
+
 @pytest.mark.skip
 def test_celery_task():
     assert False
@@ -182,6 +226,7 @@ def test_celery_task():
 @pytest.mark.skip
 def test_model_execution_sync():
     assert False
+
 
 @pytest.mark.skip
 def test_model_execution_async():

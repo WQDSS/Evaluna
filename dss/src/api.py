@@ -28,7 +28,9 @@ async def status(req, resp, *, exec_id):
     resp.media = {"id": exec_id, "status": status}
     if result is not None:
         result_copy = dict(result)
-        result_copy["params"] = result["params"].values
+        if "params" in result_copy:
+            result_copy["params"] = result["params"].values
+
         resp.media["result"] = result_copy
         logging.info(result)
 

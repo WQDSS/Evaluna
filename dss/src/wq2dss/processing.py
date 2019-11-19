@@ -101,18 +101,23 @@ class Execution:
 
         self.output_file = params['model_analysis']['output_file']
 
-        for i, s in enumerate(sliced(permutations, num_parallel_execs)):
-            logger.info(f'About to process slice {i}: {s}')
-            awaitables = [self.execute_run_async(self.model_name, params, p) for p in s]
-            logger.info(f'Going to call gather')
-            await asyncio.gather(*awaitables)
-            logger.info(f'finished slice {i}: {s}')
+        try:
+            for i, s in enumerate(sliced(permutations, num_parallel_execs)):
+                logger.info(f'About to process slice {i}: {s}')
+                awaitables = [self.execute_run_async(self.model_name, params, p) for p in s]
+                logger.info(f'Going to call gather')
+                await asyncio.gather(*awaitables)
+                logger.info(f'finished slice {i}: {s}')
 
-        best_run = self.find_best_run(params)
+            best_run = self.find_best_run(params)
 
-        # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
-        self.save_best_run(best_run)
-        self.result = {'best_run': best_run.run_id, 'params': best_run.permutation, 'score': best_run.score(params)}
+            # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
+            self.save_best_run(best_run)
+            self.result = {'best_run': best_run.run_id, 'params': best_run.permutation, 'score': best_run.score(params)}
+        except Exception as e:
+            logger.error("An error occurred during processing")
+            self.result = {'best_run': 'FAILED', 'score': 0, 'error': str(e)}
+            raise
 
     async def execute_run_async(self, model_name, params, run_permutation):
         run_id = get_run_id()
