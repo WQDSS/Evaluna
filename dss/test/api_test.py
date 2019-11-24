@@ -2,6 +2,8 @@ import asyncio
 import logging
 import io
 import json
+import pathlib
+import shutil
 import unittest.mock as mock
 import zipfile
 
@@ -149,22 +151,54 @@ def test_add_model(tmp_path):
     assert 'test_model' in models_list['models']
 
 
-def test_model_registry_client(tmp_path):
+def test_model_registry_client(tmp_path_factory):
+
+    tmp_path = tmp_path_factory.mktemp("new_model_dir")
+    tmp_model_base = tmp_path_factory.mktemp("model_base")
+    with mock.patch.object(wq2dss.model_registry, 'BASE_MODEL_DIR', tmp_model_base):
+        # add a test model
+        file_a = tmp_path / "file.a"
+        file_a.write_bytes("this is a file".encode())
+        model_zip = tmp_path / "model.zip"
+
+        with zipfile.ZipFile(model_zip, 'w') as z:
+            z.write(file_a)
+
+        files = {'model': ('test_model-new', model_zip.read_bytes(), 'application/zip')}
+        model_registry_api.api.requests.post("/models", files=files)
+
+        # fetch the test model
+        model_registry_client = wq2dss.model_registry.ModelRegistryClient("/models", model_registry_api.api.requests)
+        model_contents = model_registry_client.get_model_by_name("test_model-new")
+        returned_model = zipfile.ZipFile(io.BytesIO(model_contents))
+        assert returned_model.namelist() == ["file.a"]
+
+
+def test_model_registry_client_model_in_dir(tmp_path):
 
     # add a test model
-    file_a = tmp_path / "file.a"
+    model_dir = tmp_path / "test_model-dir" / "subdir"
+    model_dir.mkdir(parents=True)
+    file_a = model_dir / "file.a"
     file_a.write_bytes("this is a file".encode())
+    file_b = model_dir / "file.b"
+    file_b.write_bytes("this is another file".encode())
     model_zip = tmp_path / "model.zip"
 
     with zipfile.ZipFile(model_zip, 'w') as z:
-        z.write(file_a)
+        z.write(file_a, arcname=pathlib.PurePath(*file_a.parts[-2:]))
+        z.write(file_b, arcname=pathlib.PurePath(*file_b.parts[-2:]))
 
-    files = {'model': ('test_model-new', model_zip.read_bytes(), 'application/zip')}
+    try:
+        shutil.rmtree(wq2dss.model_registry.BASE_MODEL_DIR)
+    except FileNotFoundError:
+        pass
+    files = {'model': ('test_model-new-in-dir', model_zip.read_bytes(), 'application/zip')}
     model_registry_api.api.requests.post("/models", files=files)
 
     # fetch the test model
     model_registry_client = wq2dss.model_registry.ModelRegistryClient("/models", model_registry_api.api.requests)
-    model_contents = model_registry_client.get_model_by_name("test_model-new")
+    model_contents = model_registry_client.get_model_by_name("test_model-new-in-dir")
 
-    with open(model_zip, "rb") as model_f:
-        assert model_contents == model_f.read()
+    returned_model = zipfile.ZipFile(io.BytesIO(model_contents))
+    assert returned_model.namelist() == ['file.a', 'file.b']
