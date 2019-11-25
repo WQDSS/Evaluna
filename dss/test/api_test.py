@@ -201,4 +201,4 @@ def test_model_registry_client_model_in_dir(tmp_path):
     model_contents = model_registry_client.get_model_by_name("test_model-new-in-dir")
 
     returned_model = zipfile.ZipFile(io.BytesIO(model_contents))
-    assert returned_model.namelist() == ['file.a', 'file.b']
+    assert sorted(returned_model.namelist()) == ['file.a', 'file.b']
