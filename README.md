@@ -1,6 +1,6 @@
 # Evaluna [![Build Status](https://travis-ci.com/WQDSS/Evaluna.svg?branch=master)](https://travis-ci.com/WQDSS/Evaluna)
 This project suplies a basic DSS infrastructure that can be expanded
-for water quality based on CE-QUAL-W2 model
+for water quality based on CE-QUAL-W2 model (wqdss)
 
 
 ## Using Kubernetes
