@@ -16,7 +16,7 @@ service:
   port: 80
 
 ingress:
-  enabled: false
+  enabled: true
   annotations:
     kubernetes.io/ingress.global-static-ip-name: wq2dss-ip
     

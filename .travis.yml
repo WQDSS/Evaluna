@@ -42,7 +42,7 @@ before_script:
   # Create an image pull secret.
   - kubectl create secret docker-registry regcred --docker-server=https://index.docker.io/v1/ --docker-username=$DOCKER_USERNAME --docker-password=$DOCKER_PASSWORD --docker-email=ben.dayan@gmail.com
   # Install helm, as it is required for testing
-  - curl https://get.helm.sh/helm-v3.0.0-rc.2-linux-amd64.tar.gz | tar xz linux-amd64/helm && chmod +x linux-amd64/helm && sudo mv linux-amd64/helm /usr/local/bin/
+  - curl https://get.helm.sh/helm-v3.0.0-linux-amd64.tar.gz | tar xz linux-amd64/helm && chmod +x linux-amd64/helm && sudo mv linux-amd64/helm /usr/local/bin/
 
 # command to run tests
 script:

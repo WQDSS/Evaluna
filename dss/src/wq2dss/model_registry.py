@@ -1,5 +1,6 @@
 from io import BytesIO
 import logging
+import pathlib
 import os
 import shutil
 import zipfile
@@ -43,6 +44,31 @@ def get_model_by_name(model_name):
         raise ModelNotFoundError(model_name)
 
 
+def _common_subdir_in_zip(model_zip):
+    """Given a zip file, return the common_subdir that all files have (if there is one)."""
+
+    # get the names of all files (not directories)
+    namelist = [f.filename for f in model_zip.infolist() if not f.is_dir()]
+    if not namelist:
+        return None
+
+    parts = pathlib.PurePath(namelist[0]).parts
+    same_parts = []
+
+    # loop through all parts (except final one, since that's the file name)
+    # and confirm they are the same for all files
+    for part_num, part in enumerate(parts[:-1]):
+        if all(pathlib.PurePath(name).parts[part_num] == part for name in namelist):
+            same_parts.append(part)
+        else:
+            break
+
+    if same_parts:
+        return pathlib.PurePath(*same_parts)
+
+    return None
+
+
 def add_model(model_name, model_contents, ignore_already_exists=True):
     logger.info(f"going to add model {model_name}")
     if model_name in MODELS:
@@ -55,10 +81,23 @@ def add_model(model_name, model_contents, ignore_already_exists=True):
     model_dir = os.path.join(BASE_MODEL_DIR, model_name)
     model_zip = zipfile.ZipFile(BytesIO(model_contents))
     model_zip.extractall(model_dir)
+
+    # if there was a hierarchy of directories in the zip (but all files are in the same path)
+    # use only the contents of the leaf directory
+    common_subdir = _common_subdir_in_zip(model_zip)
+    if common_subdir:
+        logger.debug(f'found common subdir {common_subdir}, going to take files from it')
+        full_dir = os.path.join(model_dir, common_subdir)
+        for f in os.listdir(full_dir):
+            shutil.move(os.path.join(full_dir, f), model_dir)
+        shutil.rmtree(os.path.join(model_dir, common_subdir.parts[0]))
+
+    else:
+        logger.debug('no common subidr was found')
     MODELS[model_name] = model_dir
 
-    with open(os.path.join(BASE_MODEL_DIR, f"{model_name}.zip"), "wb") as model_file:
-        model_file.write(model_contents)
+    # create a zip file that will be returned upon request
+    shutil.make_archive(os.path.join(BASE_MODEL_DIR, model_name), 'zip', model_dir)
 
 
 def get_models():

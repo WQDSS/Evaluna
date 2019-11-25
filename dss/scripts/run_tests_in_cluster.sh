@@ -5,11 +5,7 @@ test_ns=wq2dss-test-${tag}
 kubectl create ns ${test_ns}
 
 # deploy the helm chart with the testing flag set
-helm install wq2dss dss/chart/wq2dss/ --namespace ${test_ns} --set test.enabled=true
-
-# wait for everything to come up (no init container and readiness checks in place yet)
-# TODO: remove the sleep when waiting for all components will work
-sleep 30
+helm install wq2dss dss/chart/wq2dss/ --namespace ${test_ns} --set test.enabled=true --wait
 
 # hack for bash in windows
 if [ -n "$MSYSTEM" ] ; then
