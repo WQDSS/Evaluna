@@ -5,7 +5,7 @@ import sys
 import semver
 import yaml
 
-CHART_PATH = os.path.join('dss', 'chart', 'wq2dss', 'Chart.yaml')
+CHART_PATH = os.path.join('dss', 'chart', 'wqdss', 'Chart.yaml')
 
 
 def main():

@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{ template "wq2dss.fullname" . }}-test
+  name: {{ template "wqdss.fullname" . }}-test
   labels:
-{{ include "wq2dss.labels" . | indent 4 }}
+{{ include "wqdss.labels" . | indent 4 }}
 spec:
   terminationGracePeriodSeconds: 3
   imagePullSecrets:
@@ -15,5 +15,5 @@ spec:
       command: ["sleep", "infinity"]
       env:      
         - name: "MODEL_REGISTRY_SERVICE"
-          value: "{{ template "wq2dss.fullname" . }}-model-registry"
+          value: "{{ template "wqdss.fullname" . }}-model-registry"
 {{- end }}

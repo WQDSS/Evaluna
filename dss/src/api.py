@@ -5,22 +5,22 @@ import os
 import responder
 import logging
 
-import wq2dss.model_registry
-import wq2dss.processing
+import wqdss.model_registry
+import wqdss.processing
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 
 api = responder.API()
-model_registry_client = wq2dss.model_registry.ModelRegistryClient()
+model_registry_client = wqdss.model_registry.ModelRegistryClient()
 
 
 @api.route("/status/{exec_id}")
 async def status(req, resp, *, exec_id):
     try:
-        status = wq2dss.processing.get_status(exec_id)
-        result = wq2dss.processing.get_result(exec_id)
+        status = wqdss.processing.get_status(exec_id)
+        result = wqdss.processing.get_result(exec_id)
     except KeyError:
         status = "NOT_FOUND"
         result = None
@@ -38,11 +38,11 @@ async def status(req, resp, *, exec_id):
 @api.route("/best_run/{exec_id}")
 async def run_zip(req, resp, *, exec_id):
     try:
-        status = wq2dss.processing.get_status(exec_id)
+        status = wqdss.processing.get_status(exec_id)
         if status != "COMPLETED":
             raise KeyError
 
-        resp.content = wq2dss.processing.get_best_run(exec_id)
+        resp.content = wqdss.processing.get_best_run(exec_id)
         resp.mimetype = "application/zip"
     except KeyError:
         resp.status_code = 400
@@ -61,11 +61,11 @@ async def exec_dss(req, resp):
     if 'model_name' in media:
         params['model_run']['model_name'] = media['model_name'].decode()
 
-    exec_id = wq2dss.processing.get_exec_id()
+    exec_id = wqdss.processing.get_exec_id()
 
     async def dss_task():
         logger.info("Going to execute dss!")
-        await wq2dss.processing.execute_dss(exec_id, params)
+        await wqdss.processing.execute_dss(exec_id, params)
 
     loop = asyncio.get_event_loop()
     loop.create_task(dss_task())
@@ -76,7 +76,7 @@ async def exec_dss(req, resp):
 @api.route("/executions")
 async def completed_executions(req, resp):
     logger.info("fetching previous executions")
-    resp.media = wq2dss.processing.get_executions()
+    resp.media = wqdss.processing.get_executions()
 
 
 @api.route("/models")
