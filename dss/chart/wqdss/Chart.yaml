@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: '1574625167'
+appVersion: 'v0.1.0'
 dependencies:
 - name: rabbitmq
   version: 6.11.0
