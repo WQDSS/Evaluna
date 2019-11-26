@@ -6,7 +6,7 @@ COMMIT=$1
 if [ -n "$2" ] ; then
     TAG=$2
 else
-    TAG=$(git describe --tags --abrev=0)
+    TAG=$(git describe --tags --abbrev=0)
 fi
 
 
