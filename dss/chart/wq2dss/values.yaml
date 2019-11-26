@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: "booooh/waterqualitydss"
+  repository: "evaluna/waterqualitydss"
   pullPolicy: IfNotPresent
   tag: "1572126482"
   pullSecretsName: "regcred"
