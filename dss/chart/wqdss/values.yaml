@@ -18,7 +18,7 @@ service:
 ingress:
   enabled: true
   annotations:
-    kubernetes.io/ingress.global-static-ip-name: wq2dss-ip
+    kubernetes.io/ingress.global-static-ip-name: wqdss-ip
     
   # hosts:
   #   - host: chart-example.local
@@ -68,7 +68,7 @@ affinity:
         - weight: 1
           preference:
             matchExpressions:
-              - key: wq2dss-node-type
+              - key: wqdss-node-type
                 operator: In
                 values:
                   - default
@@ -77,7 +77,7 @@ affinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
-              - key: wq2dss-node-type
+              - key: wqdss-node-type
                 operator: In
                 values:
                   - worker

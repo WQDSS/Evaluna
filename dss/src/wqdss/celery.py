@@ -1,9 +1,9 @@
 from celery import Celery
 
-app = Celery('wq2dss',
+app = Celery('wqdss',
              broker='amqp://user:password@rabbitmq',
              backend='rpc://',
-             include=['wq2dss.tasks'])
+             include=['wqdss.tasks'])
 
 app.conf.update(
     task_acks_late=True,

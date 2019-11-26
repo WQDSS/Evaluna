@@ -9,11 +9,11 @@ import pytest
 from pytest import approx
 from asynctest import CoroutineMock
 
-# from wq2dss import model_execution, processing, model_registry
-import wq2dss
-import wq2dss.processing
-import wq2dss.tasks
-import wq2dss.model_execution
+
+import wqdss
+import wqdss.processing
+import wqdss.tasks
+import wqdss.model_execution
 
 params = {
     'model_analysis': {
@@ -42,7 +42,7 @@ async def test_execute_dss():
 
     async def execute_on_worker_side_effect(model_name, param_values_dict, output_file):
 
-        param_values = wq2dss.model_execution.ModelExecutionPermutation.from_dict(param_values_dict)
+        param_values = wqdss.model_execution.ModelExecutionPermutation.from_dict(param_values_dict)
 
         out_zip_io = BytesIO()
         with zipfile.ZipFile(out_zip_io, 'w') as out_zip:
@@ -59,45 +59,45 @@ async def test_execute_dss():
 
         return out_zip_io.getvalue()
 
-    with patch('wq2dss.processing.execute_on_worker', new=CoroutineMock(side_effect=execute_on_worker_side_effect)) as execute_on_worker:
-        await wq2dss.processing.execute_dss(exec_id, params)
+    with patch('wqdss.processing.execute_on_worker', new=CoroutineMock(side_effect=execute_on_worker_side_effect)) as execute_on_worker:
+        await wqdss.processing.execute_dss(exec_id, params)
 
     assert execute_on_worker.call_count == 6 * 3  # 6 values for q_in, 3 values for hangq01
-    assert wq2dss.processing.get_result(exec_id)['score'] == approx(4.4)
+    assert wqdss.processing.get_result(exec_id)['score'] == approx(4.4)
 
 
 def test_get_run_score():
     # test where all values are at their targets
-    with patch('wq2dss.processing.get_run_parameter_value', side_effect=[3.7, 2.4, 8.0]):
-        result = wq2dss.processing.get_run_score(params, "")
+    with patch('wqdss.processing.get_run_parameter_value', side_effect=[3.7, 2.4, 8.0]):
+        result = wqdss.processing.get_run_score(params, "")
         assert result == 0
 
     # test where one value exceeds target (wrong direction)
-    with patch('wq2dss.processing.get_run_parameter_value', side_effect=[3.7, 2.4, 7.0]):
-        result = wq2dss.processing.get_run_score(params, "")
+    with patch('wqdss.processing.get_run_parameter_value', side_effect=[3.7, 2.4, 7.0]):
+        result = wqdss.processing.get_run_score(params, "")
         assert result == approx(1.0)  # (|(7.0 - 8.0)/0.5)| / 2.0)
 
     # test where two values exceed target (wrong direction)
-    with patch('wq2dss.processing.get_run_parameter_value', side_effect=[3.8, 2.4, 7.0]):
-        result = wq2dss.processing.get_run_score(params, "")
+    with patch('wqdss.processing.get_run_parameter_value', side_effect=[3.8, 2.4, 7.0]):
+        result = wqdss.processing.get_run_score(params, "")
         # (|(3.7 - 3.8)/0.1|) / 4.0) + (|(7.0 - 8.0)/0.5)| / 2.0)
         assert result == approx(1.25)
 
     # test where two values exceed target (one in wrong direction, one in right direction)
-    with patch('wq2dss.processing.get_run_parameter_value', side_effect=[3.6, 2.4, 7.0]):
-        result = wq2dss.processing.get_run_score(params, "")
+    with patch('wqdss.processing.get_run_parameter_value', side_effect=[3.6, 2.4, 7.0]):
+        result = wqdss.processing.get_run_score(params, "")
         # (|(3.7 - 3.6)/0.1|) / 4.0) + (|(7.0 - 8.0)/0.5)| / 2.0)
         assert result == approx(1.25)
 
     # test where two values exceed target (both in right direction)
-    with patch('wq2dss.processing.get_run_parameter_value', side_effect=[3.6, 2.4, 9.0]):
-        result = wq2dss.processing.get_run_score(params, "")
+    with patch('wqdss.processing.get_run_parameter_value', side_effect=[3.6, 2.4, 9.0]):
+        result = wqdss.processing.get_run_score(params, "")
         # (|(3.7 - 3.6)/0.1|) / 4.0) + (|(9.0 - 8.0)/0.5)| / 2.0)
         assert result == approx(1.25)
 
 
 def test_generate_permutations():
-    result = wq2dss.processing.generate_permutations(params)
+    result = wqdss.processing.generate_permutations(params)
     value_perms = list(itertools.product([1.0, 1.5, 2.0], [
                        30.0, 32.0, 34.0, 36.0, 38.0, 40.0]))
     names = [i['name'] for i in params['model_run']['input_files']]
@@ -129,15 +129,15 @@ async def test_mock_stream():
             ]
         }
     }
-    shutil.copy(os.path.join(wq2dss.model_registry.BASE_MODEL_DIR,
-                             wq2dss.model_execution.MODEL_EXE), mock_stream_dir)
+    shutil.copy(os.path.join(wqdss.model_registry.BASE_MODEL_DIR,
+                             wqdss.model_execution.MODEL_EXE), mock_stream_dir)
     shutil.make_archive('default_t2', 'zip', mock_stream_dir)
-    registry_client = wq2dss.model_registry.ModelRegistryClient()
+    registry_client = wqdss.model_registry.ModelRegistryClient()
     with open("default_t2.zip", "rb") as f:
         registry_client.add_model("default_t2", f.read())
 
-    await wq2dss.processing.execute_dss(exec_id, test_params)
-    dss_result = wq2dss.processing.get_result(exec_id)
+    await wqdss.processing.execute_dss(exec_id, test_params)
+    dss_result = wqdss.processing.get_result(exec_id)
     assert dss_result['params'].values['hangq01.csv'] == 1.0
     assert dss_result['params'].values['qin_br8.csv'] == 30.0
     assert dss_result['score'] == approx(0.8565)
@@ -150,12 +150,12 @@ async def test_mock_stream():
 #     test_params['model_run']['model_name'] = 'somemodel'
 
 #     with pytest.raises(model_registry.ModelNotFoundError) as excinfo:
-#         await wq2dss.processing.execute_dss('no-such-model', test_params)
+#         await wqdss.processing.execute_dss('no-such-model', test_params)
 #     assert excinfo.value.model_name == 'somemodel'
 
 #     model_registry.MODELS['somemodel'] = '/test/does-not-exist'
 #     with pytest.raises(model_registry.ModelNotFoundError) as excinfo:
-#         await wq2dss.processing.execute_dss('this-will-fail', test_params)
+#         await wqdss.processing.execute_dss('this-will-fail', test_params)
 
 #     assert excinfo.value.model_name == 'somemodel'
 
@@ -170,7 +170,7 @@ def test_create_run_zip():
     zipfile_obj = MagicMock(__enter__=Mock(return_value=context_mock))
     input_files = test_params['model_run']['input_files']
     with patch('zipfile.ZipFile', return_value=zipfile_obj) as zf:
-        zipbytes = wq2dss.model_execution.create_run_zip(run_dir, [f["name"] for f in input_files] + ['foobar'])
+        zipbytes = wqdss.model_execution.create_run_zip(run_dir, [f["name"] for f in input_files] + ['foobar'])
         assert zf.call_args_list[0][0][0].getvalue() is zipbytes
         assert context_mock.write.call_count == len(input_files) + 1  # One additional write for output file
 
@@ -203,17 +203,17 @@ async def test_failed_processing():
             ]
         }
     }
-    shutil.copy(os.path.join(wq2dss.model_registry.BASE_MODEL_DIR,
-                             wq2dss.model_execution.MODEL_EXE), mock_stream_dir)
+    shutil.copy(os.path.join(wqdss.model_registry.BASE_MODEL_DIR,
+                             wqdss.model_execution.MODEL_EXE), mock_stream_dir)
     shutil.make_archive('default_t2', 'zip', mock_stream_dir)
-    registry_client = wq2dss.model_registry.ModelRegistryClient()
+    registry_client = wqdss.model_registry.ModelRegistryClient()
     with open("default_t2.zip", "rb") as f:
         registry_client.add_model("default_t2", f.read())
 
     with pytest.raises(Exception):
-        await wq2dss.processing.execute_dss(exec_id, test_params)
+        await wqdss.processing.execute_dss(exec_id, test_params)
 
-    dss_result = wq2dss.processing.get_result(exec_id)
+    dss_result = wqdss.processing.get_result(exec_id)
     assert dss_result['error'] is not None
     assert dss_result['score'] == 0
 

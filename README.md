@@ -1,6 +1,6 @@
 # Evaluna [![Build Status](https://travis-ci.com/WQDSS/Evaluna.svg?branch=master)](https://travis-ci.com/WQDSS/Evaluna)
 This project suplies a basic DSS infrastructure that can be expanded
-for water quality based on CE-QUAL-W2 model
+for water quality based on CE-QUAL-W2 model (wqdss)
 
 
 ## Using Kubernetes
@@ -40,9 +40,9 @@ TBD - need to add details and examples here
 The project includes a helm chart that is configured to use the released docker images from the master branch. If you would just like to deploy that version, you can simply use the command:
 
 ```bash
-helm install wq2dss dss/chart/wq2dss/ --namespace wq2dss
+helm install wqdss dss/chart/wqdss/ --namespace wqdss
 ```
-This will install the application into the namespaces named ```wq2dss``` using the default configuration.
+This will install the application into the namespaces named ```wqdss``` using the default configuration.
 
 
 ### Automatic Horizontal scaling
@@ -58,18 +58,18 @@ If you're using a local installation (not minikube or cloud versions), you may n
 
 Once you have the metrics-server functionality enabled in the cluster, you can install the helm chart with the ```hpa.enabled=true ``` flag to enable automatic horizontal scaling:
 ```bash
-helm install wq2dss dss/chart/wq2dss/ --namespace wq2dss --set hpa.enabled=true 
+helm install wqdss dss/chart/wqdss/ --namespace wqdss --set hpa.enabled=true 
 ```
 
 If you choose to have different node types for workers and for the front/backend services (recommended for production, but not for development), please use the following command:
 
 ```bash
-helm install wq2dss dss/chart/wq2dss/ --namespace wq2dss --set hpa.enabled=true --set affinity.enabled=true
+helm install wqdss dss/chart/wqdss/ --namespace wqdss --set hpa.enabled=true --set affinity.enabled=true
 ```
 
 In this case please make sure that you label your nodes accordingly:
-* ```wq2dss-node-type=worker``` label should be used for worker nodes
-* ```wq2dss-node-type=default``` label should be used for all other nodes.
+* ```wqdss-node-type=worker``` label should be used for worker nodes
+* ```wqdss-node-type=default``` label should be used for all other nodes.
 
 The only nodes that should be scaled by the cluster autoscaler should be pods from the worker nodepool.
 
