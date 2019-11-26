@@ -14,7 +14,7 @@ echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 docker_username=${DOCKER_USERNAME_FOR_REPO:-evaluna}
 
-for image in (waterqualitydss waterqualitydss-test) ; do 
+for image in waterqualitydss waterqualitydss-test ; do 
     docker push "${docker_username}/${image}:$COMMIT"
     docker tag "${docker_username}/${image}:$COMMIT" "${docker_username}/${image}:$TAG"
     docker push "${docker_username}/${image}:$TAG"
