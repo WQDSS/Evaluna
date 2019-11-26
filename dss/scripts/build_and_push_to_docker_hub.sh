@@ -6,7 +6,7 @@ if [ "$1" == "bump" ] ; then
         bump_type="$2"
     fi
 fi
-docker_username=${DOCKER_USERNAME:-booooh}
+docker_username=${DOCKER_USERNAME_FOR_REPO:-evaluna}
 current_commit=$(git rev-parse --short HEAD)
 image_tag=${TAG:-$current_commit}
 docker build --rm -f "Dockerfile" -t waterqualitydss:latest -t "${docker_username}/waterqualitydss:$image_tag" .
