@@ -34,12 +34,31 @@ minikube start minikube start --kubernetes-version=v1.16.0  --addons ingress --a
 The ingress and metrics server addons are selected to allow testing of the ingress definition, and automatic horizontal scaling
 
 ### Using Google Cloud
-TBD - need to add details and examples here
+All actions can be carried out via the web console, and if you're not familiar with the different options that are available that should probably be the way you create and define the cluster for the first few times.
 
-## Install using helm
-The project includes a helm chart that is configured to use the released docker images from the master branch. If you would just like to deploy that version, you can simply use the command:
+Once you've become more comfortable, it should be worth noting that all actions can be carried out from the commandline as well. This has the added benefit of making it simple to automate.
+
+here are the commands used in order to create a simple cluster that can autoscale as neeeded:
 
 ```bash
+# set the default project (if needed)
+glcoud config set project <PROJECT_NAME>
+
+# create the cluster
+gcloud container clusters create --machine-type n2-standard-2 --num-nodes 1 --node-labels=wqdss-node-type=default --cluster-version  latest <CLUSTER_NAME>
+
+# add an auto-scaling node pool that will be used for the workers
+gcloud container node-pools create worker-pool --cluster <CLUSTER_NAME> --enable-autoscaling --max-nodes=5 --min-nodes=1 --machine-type n2-standard-2 --num-nodes 1 --node-labels=wqdss-node-type=worker
+```
+
+## Install using helm
+The project includes a helm chart that is configured to use the released docker images from the master branch. If you would just like to deploy that version, you can simply use the commands:
+
+```bash
+# create the kubernetes namespace into which the application will be installed
+kubectl create ns wqdds
+
+# install the application
 helm install wqdss dss/chart/wqdss/ --namespace wqdss
 ```
 This will install the application into the namespaces named ```wqdss``` using the default configuration.
