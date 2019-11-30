@@ -90,7 +90,7 @@ class Execution:
 
     async def execute(self, params):
         permutations = generate_permutations(params)
-        num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "4"))
+        num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "-1"))
         try:
             self.model_name = params['model_run']['model_name']
         except KeyError:
@@ -102,12 +102,19 @@ class Execution:
         self.output_file = params['model_analysis']['output_file']
 
         try:
-            for i, s in enumerate(sliced(permutations, num_parallel_execs)):
-                logger.info(f'About to process slice {i}: {s}')
-                awaitables = [self.execute_run_async(self.model_name, params, p) for p in s]
+            if num_parallel_execs > 0 and len(permutations) > num_parallel_execs:
+                for i, s in enumerate(sliced(permutations, num_parallel_execs)):
+                    logger.info(f'About to process slice {i}: {s}')
+                    awaitables = [self.execute_run_async(self.model_name, params, p) for p in s]
+                    logger.info(f'Going to call gather')
+                    await asyncio.gather(*awaitables)
+                    logger.info(f'finished slice {i}: {s}')
+            else:
+                logger.info(f'going to execute all permutations')
+                awaitables = [self.execute_run_async(self.model_name, params, p) for p in permutations]
                 logger.info(f'Going to call gather')
                 await asyncio.gather(*awaitables)
-                logger.info(f'finished slice {i}: {s}')
+                logger.info('Done executing all permutations')
 
             best_run = self.find_best_run(params)
 
@@ -144,10 +151,8 @@ def generate_permutations(params):
     # each value in run_values includes the value to be used for each input
     # file. Now, create a dict that will hold all the necessary information:
     # input_file: (column_name, value)
-    permutations = []
-    for r in run_values:
-        permutations.append(ModelExecutionPermutation(
-            input_file_names, input_file_columns, r))
+    permutations = [
+        ModelExecutionPermutation(input_file_names, input_file_columns, r) for r in run_values]
 
     return permutations
 
