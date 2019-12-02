@@ -4,6 +4,7 @@ import io
 import json
 import pathlib
 import shutil
+import time
 import unittest.mock as mock
 import zipfile
 
@@ -80,6 +81,8 @@ def test_dss_execution(api, tmp_path):
     exec_id = model_response['id']
 
     # we check for the running state before allowing the model to complete
+    while api.requests.get(f"/status/{exec_id}").json()['status'] == 'NOT_FOUND':
+        time.sleep(0.1)
     assert api.requests.get(f"/status/{exec_id}").json()['status'] == wqdss.processing.ExectuionState.RUNNING.value
 
     # the model can now execute

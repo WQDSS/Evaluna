@@ -91,6 +91,10 @@ function monitorExecution(executionId, form) {
           setTimeout(monitorThis, 5000);
         }
         form.dispatchEvent(new CustomEvent("dssUpdate", { detail: data }));
+      })
+      .catch(reason => {
+        console.log(`Error while checking status ${reason}`);
+        setTimeout(monitorThis, 5000);
       });
   }
   monitorThis();

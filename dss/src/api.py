@@ -63,12 +63,12 @@ async def exec_dss(req, resp):
 
     exec_id = wqdss.processing.get_exec_id()
 
-    async def dss_task():
+    @api.background.task
+    def dss_task(loop):
         logger.info("Going to execute dss!")
-        await wqdss.processing.execute_dss(exec_id, params)
+        loop.create_task(wqdss.processing.execute_dss(exec_id, params))
 
-    loop = asyncio.get_event_loop()
-    loop.create_task(dss_task())
+    dss_task(asyncio.get_running_loop())
     logger.info("created task %s", exec_id)
     resp.media = {"id": exec_id}
 

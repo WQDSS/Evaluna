@@ -6,4 +6,4 @@ dependencies:
 description: A Helm chart for Kubernetes
 name: wqdss
 type: application
-version: 0.2.16
+version: 0.2.20
