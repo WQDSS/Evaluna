@@ -56,7 +56,7 @@ The project includes a helm chart that is configured to use the released docker 
 
 ```bash
 # create the kubernetes namespace into which the application will be installed
-kubectl create ns wqdds
+kubectl create ns wqdss
 
 # install the application
 helm install wqdss dss/chart/wqdss/ --namespace wqdss
