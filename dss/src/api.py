@@ -27,12 +27,20 @@ async def status(req, resp, *, exec_id):
 
     resp.media = {"id": exec_id, "status": status}
     if result is not None:
-        result_copy = dict(result)
-        if "params" in result_copy:
-            result_copy["params"] = result["params"].values
+        try:
+            logger.info(f"Got Result {result}")
+            result_copy = []
+            for iteration_result in result:
+                logger.info(f"got iteration_result: {iteration_result}")
+                iter_copy = dict(iteration_result)
+                if "params" in iteration_result:
+                    iter_copy["params"] = iteration_result["params"].values
+                result_copy.append(iter_copy)
 
-        resp.media["result"] = result_copy
-        logging.info(result)
+            resp.media["result"] = result_copy
+            logger.info(result)
+        except Exception as e:
+            resp.media["result"] = str(e)
 
 
 @api.route("/best_run/{exec_id}")

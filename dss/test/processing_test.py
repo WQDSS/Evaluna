@@ -63,7 +63,7 @@ async def test_execute_dss():
         await wqdss.processing.execute_dss(exec_id, params)
 
     assert execute_on_worker.call_count == 6 * 3  # 6 values for q_in, 3 values for hangq01
-    assert wqdss.processing.get_result(exec_id)['score'] == approx(4.4)
+    assert wqdss.processing.get_result(exec_id)[0]['score'] == approx(4.4)
 
 
 def test_get_run_score():
@@ -115,9 +115,9 @@ async def test_mock_stream():
             "type": "flow",
             "input_files": [
                 {"name": "hangq01.csv", "col_name": "Q",
-                    "min_val": "1", "max_val": "2", "steps": "0.5"},
+                    "min_val": "1", "max_val": "2", "steps": ["0.5"]},
                 {"name": "qin_br8.csv", "col_name": "QWD",
-                    "min_val": "30", "max_val": "34", "steps": "2"}
+                    "min_val": "30", "max_val": "34", "steps": ["2"]}
             ]
         },
         "model_analysis": {
@@ -137,7 +137,7 @@ async def test_mock_stream():
         registry_client.add_model("default_t2", f.read())
 
     await wqdss.processing.execute_dss(exec_id, test_params)
-    dss_result = wqdss.processing.get_result(exec_id)
+    dss_result = wqdss.processing.get_result(exec_id)[0]
     assert dss_result['params'].values['hangq01.csv'] == 1.0
     assert dss_result['params'].values['qin_br8.csv'] == 30.0
     assert dss_result['score'] == approx(0.8565)
@@ -189,9 +189,9 @@ async def test_failed_processing():
             "type": "flow",
             "input_files": [
                 {"name": "hangq07.csv", "col_name": "Q",
-                    "min_val": "1", "max_val": "2", "steps": "0.5"},
+                    "min_val": "1", "max_val": "2", "steps": ["0.5"]},
                 {"name": "qin_br8.csv", "col_name": "QWD",
-                    "min_val": "30", "max_val": "34", "steps": "2"}
+                    "min_val": "30", "max_val": "34", "steps": ["2"]}
             ]
         },
         "model_analysis": {
@@ -213,7 +213,7 @@ async def test_failed_processing():
     with pytest.raises(Exception):
         await wqdss.processing.execute_dss(exec_id, test_params)
 
-    dss_result = wqdss.processing.get_result(exec_id)
+    dss_result = wqdss.processing.get_result(exec_id)[0]
     assert dss_result['error'] is not None
     assert dss_result['score'] == 0
 

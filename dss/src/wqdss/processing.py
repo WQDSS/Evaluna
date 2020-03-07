@@ -121,10 +121,11 @@ class Execution:
 
             # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
             self.save_best_run(best_run)
-            self.result = {'best_run': best_run.run_id, 'params': best_run.permutation, 'score': best_run.score(params)}
+            self.result = [{'best_run': best_run.run_id,
+                            'params': best_run.permutation, 'score': best_run.score(params)}]
         except Exception as e:
             logger.error("An error occurred during processing")
-            self.result = {'best_run': 'FAILED', 'score': 0, 'error': str(e)}
+            self.result = [{'best_run': 'FAILED', 'score': 0, 'error': str(e)}]
             raise
 
     async def execute_run_async(self, model_name, params, run_permutation, iteration):
@@ -158,23 +159,23 @@ def generate_permutations(params):
     return permutations
 
 
-def update_params_for_next_iteration(params, best_run):
-    """
-    Given the params used for the current iteration, and the resulting best_run, update the params
-    to a more percise selection, to try and drill down to a better score
-    """
+# def update_params_for_next_iteration(params, best_run):
+#     """
+#     Given the params used for the current iteration, and the resulting best_run, update the params
+#     to a more percise selection, to try and drill down to a better score
+#     """
 
-    inputs = params['model_run']['input_files']
-    curr_ranges = {i['name']: values_range(float(i['min_val']), float(
-        i['max_val']), float(i['steps'])) for i in inputs}
+#     inputs = params['model_run']['input_files']
+#     curr_ranges = {i['name']: values_range(float(i['min_val']), float(
+#         i['max_val']), float(i['steps'])) for i in inputs}
 
-    best_perm = best_run.permutation
-    for i in curr_ranges:
-        num_values_in_range = len(list(curr_ranges[i]))
+#     best_perm = best_run.permutation
+#     for i in curr_ranges:
+#         num_values_in_range = len(list(curr_ranges[i]))
 
-        # create a new value range centered around the best result
-        best_value_for_input_col = best_perm.values[i]
-        new_range = values_range()
+#         # create a new value range centered around the best result
+#         best_value_for_input_col = best_perm.values[i]
+#         new_range = values_range()
 
 
 def values_range(min_val, max_val, step):
