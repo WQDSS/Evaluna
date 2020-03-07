@@ -32,9 +32,10 @@ class ExectuionState(Enum):
 class Execution:
 
     class Run:
-        def __init__(self, run_id, permutation):
+        def __init__(self, run_id, permutation, iteration):
             self.run_id = run_id
             self.permutation = permutation
+            self.iteration = iteration
             self.result = None
 
         def get_run_output(self, output_file):
@@ -65,8 +66,8 @@ class Execution:
         self.model_name = None
         self.start_time = None
 
-    def add_run(self, run_id, p):
-        run = Execution.Run(run_id, p)
+    def add_run(self, run_id, p, iteration):
+        run = Execution.Run(run_id, p, iteration)
         self.runs.append(run)
         return run
 
@@ -105,13 +106,13 @@ class Execution:
             if num_parallel_execs > 0 and len(permutations) > num_parallel_execs:
                 for i, s in enumerate(sliced(permutations, num_parallel_execs)):
                     logger.info(f'About to process slice {i}: {s}')
-                    awaitables = [self.execute_run_async(self.model_name, params, p) for p in s]
+                    awaitables = [self.execute_run_async(self.model_name, params, p, 0) for p in s]
                     logger.info(f'Going to call gather')
                     await asyncio.gather(*awaitables)
                     logger.info(f'finished slice {i}: {s}')
             else:
                 logger.info(f'going to execute all permutations')
-                awaitables = [self.execute_run_async(self.model_name, params, p) for p in permutations]
+                awaitables = [self.execute_run_async(self.model_name, params, p, 0) for p in permutations]
                 logger.info(f'Going to call gather')
                 await asyncio.gather(*awaitables)
                 logger.info('Done executing all permutations')
@@ -126,9 +127,9 @@ class Execution:
             self.result = {'best_run': 'FAILED', 'score': 0, 'error': str(e)}
             raise
 
-    async def execute_run_async(self, model_name, params, run_permutation):
+    async def execute_run_async(self, model_name, params, run_permutation, iteration):
         run_id = get_run_id()
-        run = self.add_run(run_id, run_permutation)
+        run = self.add_run(run_id, run_permutation, iteration)
         logger.info(f"going to await run {run_id} for model {model_name}")
         run.result = await self.execute_func(model_name, run.permutation.as_dict(), self.output_file)
         logger.info(f"done awaiting run {run_id}")
@@ -141,7 +142,7 @@ def generate_permutations(params):
     '''
     inputs = params['model_run']['input_files']
     ranges = {i['name']: values_range(float(i['min_val']), float(
-        i['max_val']), float(i['steps'])) for i in inputs}
+        i['max_val']), float(i['steps'][0])) for i in inputs}
 
     # for now, get a full cartesian product of the parameter values
     run_values = itertools.product(*ranges.values())
@@ -157,6 +158,25 @@ def generate_permutations(params):
     return permutations
 
 
+def update_params_for_next_iteration(params, best_run):
+    """
+    Given the params used for the current iteration, and the resulting best_run, update the params
+    to a more percise selection, to try and drill down to a better score
+    """
+
+    inputs = params['model_run']['input_files']
+    curr_ranges = {i['name']: values_range(float(i['min_val']), float(
+        i['max_val']), float(i['steps'])) for i in inputs}
+
+    best_perm = best_run.permutation
+    for i in curr_ranges:
+        num_values_in_range = len(list(curr_ranges[i]))
+
+        # create a new value range centered around the best result
+        best_value_for_input_col = best_perm.values[i]
+        new_range = values_range()
+
+
 def values_range(min_val, max_val, step):
     '''
     Yields all values in the range [min_val, max_val] with a given step
@@ -165,7 +185,8 @@ def values_range(min_val, max_val, step):
     i = 0
     while cur_val < max_val:
         cur_val = min_val + (i * step)
-        yield cur_val
+        if cur_val <= max_val:
+            yield cur_val
         i = i + 1
 
 
