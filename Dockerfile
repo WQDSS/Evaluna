@@ -1,4 +1,4 @@
-FROM python:3 as base
+FROM python:3.7 as base
 
 # setup the directory structure for models and the executables
 RUN mkdir /models

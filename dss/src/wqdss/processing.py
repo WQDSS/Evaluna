@@ -24,6 +24,10 @@ def sliced(seq, n):
     return itertools.takewhile(bool, (seq[i: i + n] for i in itertools.count(0, n)))
 
 
+class NonEqualStepNumber(Exception):
+    pass
+
+
 class ExectuionState(Enum):
     RUNNING = 'RUNNING'
     COMPLETED = 'COMPLETED'
@@ -32,9 +36,10 @@ class ExectuionState(Enum):
 class Execution:
 
     class Run:
-        def __init__(self, run_id, permutation):
+        def __init__(self, run_id, permutation, iteration):
             self.run_id = run_id
             self.permutation = permutation
+            self.iteration = iteration
             self.result = None
 
         def get_run_output(self, output_file):
@@ -65,8 +70,8 @@ class Execution:
         self.model_name = None
         self.start_time = None
 
-    def add_run(self, run_id, p):
-        run = Execution.Run(run_id, p)
+    def add_run(self, run_id, p, iteration):
+        run = Execution.Run(run_id, p, iteration)
         self.runs.append(run)
         return run
 
@@ -88,63 +93,89 @@ class Execution:
         os.makedirs(os.path.dirname(best_run_zip_path), exist_ok=True)
         run.save_results(best_run_zip_path)
 
+    def get_num_iterations(self, params):
+        input_files = params["model_run"]["input_files"]
+        all_iteration_counts = set(len(i["steps"]) for i in input_files)
+
+        if len(all_iteration_counts) > 1:
+            raise NonEqualStepNumber(all_iteration_counts)
+
+        return all_iteration_counts.pop()
+
     async def execute(self, params):
-        permutations = generate_permutations(params)
-        num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "-1"))
-        try:
-            self.model_name = params['model_run']['model_name']
-        except KeyError:
-            self.model_name = DEFAULT_MODEL
+        for iteration in range(self.get_num_iterations(params)):
+            permutations = generate_permutations(params, self.result, iteration)
+            num_parallel_execs = int(os.getenv("NUM_PARALLEL_EXECS", "-1"))
+            try:
+                self.model_name = params['model_run']['model_name']
+            except KeyError:
+                self.model_name = DEFAULT_MODEL
 
-        self.start_time = datetime.datetime.now()
-        logger.info(f'going to use model {self.model_name}')
+            self.start_time = datetime.datetime.now()
+            logger.info(f'going to use model {self.model_name}')
 
-        self.output_file = params['model_analysis']['output_file']
+            self.output_file = params['model_analysis']['output_file']
 
-        try:
-            if num_parallel_execs > 0 and len(permutations) > num_parallel_execs:
-                for i, s in enumerate(sliced(permutations, num_parallel_execs)):
-                    logger.info(f'About to process slice {i}: {s}')
-                    awaitables = [self.execute_run_async(self.model_name, params, p) for p in s]
+            try:
+                if num_parallel_execs > 0 and len(permutations) > num_parallel_execs:
+                    for i, s in enumerate(sliced(permutations, num_parallel_execs)):
+                        logger.info(f'About to process slice {i}: {s}')
+                        awaitables = [self.execute_run_async(self.model_name, params, p, iteration) for p in s]
+                        logger.info(f'Going to call gather')
+                        await asyncio.gather(*awaitables)
+                        logger.info(f'finished slice {i}: {s}')
+                else:
+                    logger.info(f'going to execute all permutations')
+                    awaitables = [self.execute_run_async(self.model_name, params, p, iteration) for p in permutations]
                     logger.info(f'Going to call gather')
                     await asyncio.gather(*awaitables)
-                    logger.info(f'finished slice {i}: {s}')
-            else:
-                logger.info(f'going to execute all permutations')
-                awaitables = [self.execute_run_async(self.model_name, params, p) for p in permutations]
-                logger.info(f'Going to call gather')
-                await asyncio.gather(*awaitables)
-                logger.info('Done executing all permutations')
+                    logger.info('Done executing all permutations')
 
-            best_run = self.find_best_run(params)
+                best_run = self.find_best_run(params)
 
-            # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
-            self.save_best_run(best_run)
-            self.result = {'best_run': best_run.run_id, 'params': best_run.permutation, 'score': best_run.score(params)}
-        except Exception as e:
-            logger.error("An error occurred during processing")
-            self.result = {'best_run': 'FAILED', 'score': 0, 'error': str(e)}
-            raise
+                # create a zip file with all of the relevant run files (inputs and outputs used for analysis)
+                self.save_best_run(best_run)
 
-    async def execute_run_async(self, model_name, params, run_permutation):
+                if self.result is None:
+                    self.result = []
+
+                self.result.append({'best_run': best_run.run_id,
+                                    'params': best_run.permutation, 'score': best_run.score(params)})
+            except Exception as e:
+                logger.error("An error occurred during processing")
+                self.result = [{'best_run': 'FAILED', 'score': 0, 'error': str(e)}]
+                raise
+
+    async def execute_run_async(self, model_name, params, run_permutation, iteration):
         run_id = get_run_id()
-        run = self.add_run(run_id, run_permutation)
+        run = self.add_run(run_id, run_permutation, iteration)
         logger.info(f"going to await run {run_id} for model {model_name}")
         run.result = await self.execute_func(model_name, run.permutation.as_dict(), self.output_file)
         logger.info(f"done awaiting run {run_id}")
 
 
-def generate_permutations(params):
+def generate_permutations(params, best_runs, iteration):
     '''
     Iterates over the input files, and the defined range of values for qwd in each of these files.
     Returns the set of all relevant permutation values for the input files
     '''
     inputs = params['model_run']['input_files']
-    ranges = {i['name']: values_range(float(i['min_val']), float(
-        i['max_val']), float(i['steps'])) for i in inputs}
+    if iteration == 0:
+        ranges = {i['name']: values_range(float(i['min_val']), float(
+            i['max_val']), float(i['steps'][0])) for i in inputs}
+    else:
+        # build the new set of ranges, each range is [best_value - prev_step/2, best_value + prev_step/2, curr_step]
+        ranges = {}
+        for in_file in inputs:
+            file_name = in_file["name"]
+            half_prev_step = float(in_file["steps"][iteration-1])/2.0
+            curr_step = float(in_file["steps"][iteration])
+            best_value = best_runs[-1]["params"].values[file_name]
+            ranges[file_name] = values_range(best_value-half_prev_step, best_value+half_prev_step, curr_step)
 
     # for now, get a full cartesian product of the parameter values
     run_values = itertools.product(*ranges.values())
+
     input_file_names = ranges.keys()
     input_file_columns = [i['col_name'] for i in inputs]
 
@@ -165,7 +196,8 @@ def values_range(min_val, max_val, step):
     i = 0
     while cur_val < max_val:
         cur_val = min_val + (i * step)
-        yield cur_val
+        if cur_val <= max_val:
+            yield cur_val
         i = i + 1
 
 

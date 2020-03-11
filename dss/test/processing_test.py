@@ -1,5 +1,6 @@
 from io import BytesIO, StringIO
 import itertools
+import logging
 import os
 import shutil
 import zipfile
@@ -28,9 +29,9 @@ params = {
         'type': 'flow',
         'input_files': [
             {'name': 'hangq01.csv', 'col_name': 'Q',
-                'min_val': '1', 'max_val': '2', 'steps': '0.5'},
+                'min_val': '1', 'max_val': '2', 'steps': ['0.5']},
             {'name': 'qin_br8.csv', 'col_name': 'QWD',
-                'min_val': '30', 'max_val': '40', 'steps': '2'}
+                'min_val': '30', 'max_val': '40', 'steps': ['2']}
         ]
     },
 }
@@ -63,7 +64,62 @@ async def test_execute_dss():
         await wqdss.processing.execute_dss(exec_id, params)
 
     assert execute_on_worker.call_count == 6 * 3  # 6 values for q_in, 3 values for hangq01
-    assert wqdss.processing.get_result(exec_id)['score'] == approx(4.4)
+    assert wqdss.processing.get_result(exec_id)[-1]['score'] == approx(4.4)
+
+
+@pytest.mark.asyncio
+async def test_execute_dss_multi_iteration():
+    exec_id = 'foo'
+    test_params = {
+        'model_analysis': {
+            'parameters': [
+                {'name': 'NO3', 'target': '5.2', 'weight': '1', 'score_step': '0.001'},
+                {'name': 'NH4', 'target': '2.4', 'weight': '1', 'score_step': '0.002'},
+                {'name': 'DO', 'target': '35.4', 'weight': '1', 'score_step': '0.005'},
+            ],
+            "output_file": "tsr_2_seg7.csv",
+        },
+        'model_run': {
+            'type': 'flow',
+            'input_files': [
+                {'name': 'hangq01.csv', 'col_name': 'Q',
+                 'min_val': '1', 'max_val': '10', 'steps': ['1', '0.1']},
+                {'name': 'qin_br8.csv', 'col_name': 'QWD',
+                 'min_val': '30', 'max_val': '40', 'steps': ['1', '0.1']}
+            ]
+        },
+    }
+
+    async def execute_on_worker_side_effect(model_name, param_values_dict, output_file):
+
+        param_values = wqdss.model_execution.ModelExecutionPermutation.from_dict(param_values_dict)
+
+        out_zip_io = BytesIO()
+        with zipfile.ZipFile(out_zip_io, 'w') as out_zip:
+            for f in param_values.files:
+                out_zip.writestr(f, b'')
+
+            data = StringIO()
+            data.write('NO3,NH4,DO,\n')
+            no3_val = param_values.values['hangq01.csv']
+            do_val = param_values.values['qin_br8.csv']
+            logging.info(f"{no3_val}, {do_val}")
+            data.write(f'{no3_val},2.4,{do_val},\n')
+            out_zip.writestr(output_file, data.getvalue().encode())
+            try:
+                os.remove(output_file)
+            except FileNotFoundError:
+                pass
+
+        return out_zip_io.getvalue()
+
+    with patch('wqdss.processing.execute_on_worker', new=CoroutineMock(side_effect=execute_on_worker_side_effect)) as execute_on_worker:
+        await wqdss.processing.execute_dss(exec_id, test_params)
+
+    # 1st iteration: 11 values for q_in, 10 values for hangq01
+    # 2nd iteration: 11 values for q_in, 11 values for hangq01
+    assert execute_on_worker.call_count == 10 * 11 + 11 * 11
+    assert wqdss.processing.get_result(exec_id)[-1]['score'] == approx(0)
 
 
 def test_get_run_score():
@@ -97,9 +153,39 @@ def test_get_run_score():
 
 
 def test_generate_permutations():
-    result = wqdss.processing.generate_permutations(params)
+    result = wqdss.processing.generate_permutations(params, None, 0)
     value_perms = list(itertools.product([1.0, 1.5, 2.0], [
                        30.0, 32.0, 34.0, 36.0, 38.0, 40.0]))
+    names = [i['name'] for i in params['model_run']['input_files']]
+    expected = [dict(zip(names, v)) for v in value_perms]
+    assert [r.values for r in result] == expected
+
+
+def test_generate_permutations_prev_iterations():
+    test_params = {
+        'model_analysis': {
+            'parameters': [
+                {'name': 'NO3', 'target': '3.7', 'weight': '4', 'score_step': '0.1'},
+                {'name': 'NH4', 'target': '2.4', 'weight': '2', 'score_step': '0.2'},
+                {'name': 'DO', 'target': '8.0', 'weight': '2', 'score_step': '0.5'},
+            ],
+            "output_file": "tsr_2_seg7.csv",
+        },
+        'model_run': {
+            'type': 'flow',
+            'input_files': [
+                {'name': 'hangq01.csv', 'col_name': 'Q',
+                 'min_val': '1', 'max_val': '2', 'steps': ['0.5', '0.1']},
+                {'name': 'qin_br8.csv', 'col_name': 'QWD',
+                 'min_val': '30', 'max_val': '40', 'steps': ['2', '0.2']}
+            ]
+        },
+    }
+    result = wqdss.processing.generate_permutations(test_params, None, 0)
+    best_result = [{"params": result[8]}]  # (1.5, 34.0)
+    result = wqdss.processing.generate_permutations(test_params, best_result, 1)
+    value_perms = list(itertools.product([1.25, 1.35, 1.45, 1.55, 1.65, 1.75], [
+        33.0, 33.2, 33.4, 33.6, 33.8, 34.0, 34.2, 34.4, 34.6, 34.8, 35.0]))
     names = [i['name'] for i in params['model_run']['input_files']]
     expected = [dict(zip(names, v)) for v in value_perms]
     assert [r.values for r in result] == expected
@@ -115,9 +201,9 @@ async def test_mock_stream():
             "type": "flow",
             "input_files": [
                 {"name": "hangq01.csv", "col_name": "Q",
-                    "min_val": "1", "max_val": "2", "steps": "0.5"},
+                    "min_val": "1", "max_val": "2", "steps": ["0.5"]},
                 {"name": "qin_br8.csv", "col_name": "QWD",
-                    "min_val": "30", "max_val": "34", "steps": "2"}
+                    "min_val": "30", "max_val": "34", "steps": ["2"]}
             ]
         },
         "model_analysis": {
@@ -137,7 +223,7 @@ async def test_mock_stream():
         registry_client.add_model("default_t2", f.read())
 
     await wqdss.processing.execute_dss(exec_id, test_params)
-    dss_result = wqdss.processing.get_result(exec_id)
+    dss_result = wqdss.processing.get_result(exec_id)[0]
     assert dss_result['params'].values['hangq01.csv'] == 1.0
     assert dss_result['params'].values['qin_br8.csv'] == 30.0
     assert dss_result['score'] == approx(0.8565)
@@ -189,9 +275,9 @@ async def test_failed_processing():
             "type": "flow",
             "input_files": [
                 {"name": "hangq07.csv", "col_name": "Q",
-                    "min_val": "1", "max_val": "2", "steps": "0.5"},
+                    "min_val": "1", "max_val": "2", "steps": ["0.5"]},
                 {"name": "qin_br8.csv", "col_name": "QWD",
-                    "min_val": "30", "max_val": "34", "steps": "2"}
+                    "min_val": "30", "max_val": "34", "steps": ["2"]}
             ]
         },
         "model_analysis": {
@@ -213,7 +299,7 @@ async def test_failed_processing():
     with pytest.raises(Exception):
         await wqdss.processing.execute_dss(exec_id, test_params)
 
-    dss_result = wqdss.processing.get_result(exec_id)
+    dss_result = wqdss.processing.get_result(exec_id)[0]
     assert dss_result['error'] is not None
     assert dss_result['score'] == 0
 

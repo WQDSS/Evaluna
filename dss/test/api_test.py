@@ -23,8 +23,8 @@ INPUT_EXAMPLE = """
     "model_run": {
         "type": "flow",
         "input_files": [
-            { "name":"a.csv", "min_qwd":"1000", "max_qwd":"2000", "steps":"500" },
-            { "name":"b.csv", "min_qwd":"0", "max_qwd":"100", "steps":"50" }
+            { "name":"a.csv", "min_qwd":"1000", "max_qwd":"2000", "steps":["500"] },
+            { "name":"b.csv", "min_qwd":"0", "max_qwd":"100", "steps":["50"] }
         ]
     },
     "model_analysis": {
@@ -53,7 +53,7 @@ def test_dss_execution(api, tmp_path):
     '''
     Test the execution of a dss, including setting the paramters, and polling for a result
     '''
-    RESPONSE = {"score": 4.2, "params": mock.Mock(values=[])}
+    RESPONSE = [{"score": 4.2, "params": mock.Mock(values=[])}]
 
     file_obj = tmp_path / "data.t"
     file_obj.write_bytes(INPUT_EXAMPLE.encode())
@@ -90,7 +90,7 @@ def test_dss_execution(api, tmp_path):
 
     resp = api.requests.get(f"/status/{exec_id}").json()
     assert resp['status'] == wqdss.processing.ExectuionState.COMPLETED.value
-    assert resp['result']['score'] == RESPONSE['score']
+    assert resp['result'][0]['score'] == RESPONSE[0]['score']
 
     # check that the best run output is reachable
     s = io.BytesIO()

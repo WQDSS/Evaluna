@@ -52,7 +52,7 @@ def test_against_docker():
             time.sleep(5)
 
     resp = requests.get(f"{BASE_URL}/status/{exec_id}").json()
-    assert 'score' in resp['result']
+    assert 'score' in resp['result'][0]
 
 
 def test_processing_failed():
@@ -96,4 +96,4 @@ def test_processing_failed():
             time.sleep(5)
 
     resp = requests.get(f"{BASE_URL}/status/{exec_id}").json()
-    assert "error" in resp['result']
+    assert "error" in resp['result'][0]
