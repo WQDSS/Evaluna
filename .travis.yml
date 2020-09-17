@@ -49,5 +49,10 @@ script:
   - dss/scripts/run_tests_in_cluster.sh $TRAVIS_COMMIT
 
 deploy:
-  provider: script
-  script: bash dss/scripts/deploy.sh $TRAVIS_COMMIT
+  - provider: script
+    script: bash dss/scripts/deploy.sh $TRAVIS_COMMIT $TRAVIS_TAG
+    on:
+      tags: true
+      
+  - provider: script
+    script: bash dss/scripts/deploy.sh $TRAVIS_COMMIT
