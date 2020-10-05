@@ -23,7 +23,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           workingDir: "/app/src"
-          command: ["celery", "-A", "wqdss", "worker", "-l", "info"]
+          command: ["celery", "-c", "1", "-A", "wqdss", "worker", "-l", "info"]
           env:
             - name: "MODEL_REGISTRY_SERVICE"
               value: "{{ template "wqdss.fullname" . }}-model-registry"
